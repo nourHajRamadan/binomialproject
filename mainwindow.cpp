@@ -1,11 +1,18 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "mathstuff.cpp"
+#include "htmlstuff.cpp"
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+//Standard: all tabs closed except for welcome
+    for(int i=1;i<=4;i++){
+        ui->tabWidget->setTabVisible(i,0);
+    }
+
 //Standard: mit n und p rechnen
     ui->_mu_label->hide();
     ui->_sigma_label->hide();
@@ -18,26 +25,37 @@ MainWindow::MainWindow(QWidget *parent)
     ui->underLabel->setText("Ereignis");
     ui->underEdit->setPlaceholderText("k");
 
+//PRK Standard Settings
+    ui->prk_targetParameter->addItems({"Stichprobenumfang n","Trefferquote p","Ereignis k"});
+    ui->prk_2nd_compStatement->addItems({"≥","≤"});
+
+//Instruction Tab Settings
+    ui->instructionsTo->addItems({"dem allgemeinen Umgang","dem Standardrechner","den wichtigen Funktionen","dem Parameter Retrieval Kit","Aktualisierung des Binomialrechners"});
+
 //Palette Settings
     qApp->setStyle(QStyleFactory::create("Fusion"));
 
     QColor darkGray(53, 53, 53);
     QColor gray(128, 128, 128);
     QColor black(25, 25, 25);
-    QColor blue(145, 19, 209);
+
+    //experimental
+    //QColor blue(145, 19, 209);
+    //QColor blue(QRandomGenerator::global()->bounded(0,255),QRandomGenerator::global()->bounded(0,255),QRandomGenerator::global()->bounded(0,255));
+    QColor azure(0x007FFF);
 
     QPalette darkPalette;
     darkPalette.setColor(QPalette::Window, darkGray);
     darkPalette.setColor(QPalette::WindowText, Qt::white);
     darkPalette.setColor(QPalette::Base, black);
     darkPalette.setColor(QPalette::AlternateBase, darkGray);
-    darkPalette.setColor(QPalette::ToolTipBase, blue);
-    darkPalette.setColor(QPalette::ToolTipText, Qt::white);
+    darkPalette.setColor(QPalette::ToolTipBase, azure);
+    darkPalette.setColor(QPalette::ToolTipText, Qt::black);
     darkPalette.setColor(QPalette::Text, Qt::white);
     darkPalette.setColor(QPalette::Button, darkGray);
     darkPalette.setColor(QPalette::ButtonText, Qt::white);
-    darkPalette.setColor(QPalette::Link, blue);
-    darkPalette.setColor(QPalette::Highlight, blue);
+    darkPalette.setColor(QPalette::Link, azure);
+    darkPalette.setColor(QPalette::Highlight, azure);
     darkPalette.setColor(QPalette::HighlightedText, Qt::black);
 
     darkPalette.setColor(QPalette::Active, QPalette::Button, gray.darker());
@@ -57,10 +75,111 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+/////mainwindow.cpp overview:
+/// 1. tabWidget Signals
+/// 2. Standardrechner Block
+/// 3. show Histogramm Block
+/// 4. show Table Block
+/// 5. Wichtige Funktionen Block
+/// 6. Parameter Retrieval Kit Block
+/// 7. Lucky Block (other)
 
+///// ------ <<<<<tabWidget Signals>>>>> ------
+void MainWindow::on_tabWidget_tabCloseRequested(int index)
+{
+    if(!index){
+        this->resize(STDW,STDH);
+        welcomeDisplay();
+        return;
+    }
+    QString tmp=ui->tabWidget->tabText(index);
+    if((tmp=="Standardrechner" or tmp=="Wichtige Funktionen" or tmp=="Parameter Retrieval Kit" or tmp=="Gebrauchsanweisungen")){
+        ui->tabWidget->setTabVisible(index,0);
+    }else{
+        ui->tabWidget->removeTab(index);
+    }
+}
+
+void MainWindow::on_tabWidget_tabBarClicked(int index)
+{
+    ui->tabWidget->setCurrentIndex(0);
+    if(!index&&!running){
+        signal=0;
+        changeSizeEvent();
+    }
+}
+
+void MainWindow::on_show_std_button_clicked()
+{
+    ui->_n_edit->setFocus();
+    ui->tabWidget->setTabVisible(1,1);
+    ui->tabWidget->setCurrentIndex(1);
+    !easteregg?easteregg++:easteregg=0;
+}
+
+void MainWindow::on_show_wf_button_clicked()
+{
+    if(easteregg==4){
+        qDebug()<<"Easteregg!";
+        int i=30;
+        this->resize(STDW,915);
+        this->move(400,50);
+        while(i){
+            QString arg,pre = QString(R"(<br><span style="font-size: 152px; font-family: Jokerman; color: rgb(%1, %2, %3);">)").arg(QRandomGenerator::global()->bounded(255)).arg(QRandomGenerator::global()->bounded(255)).arg(QRandomGenerator::global()->bounded(255));
+            arg.push_back(QString("%1%2%3").arg(pre).arg("0000000000").arg("</span>"));
+            arg.push_back(QString("%1%2%3").arg(pre).arg("0 Easteregg 0").arg("</span>"));
+            arg.push_back(QString("%1%2%3").arg(pre).arg("0000000000").arg("</span>"));
+            ui->textBrowserX->setHtml(arg);
+            delay(2000);
+            if(!(28-i)) QDesktopServices::openUrl (QUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
+            i--;
+        }
+        easteregg=0;
+        return;
+    }else{easteregg=0;}
+    ui->wf_factorial_edit->setFocus();
+    ui->tabWidget->setTabVisible(2,1);
+    ui->tabWidget->setCurrentIndex(2);
+}
+
+
+void MainWindow::on_show_prk_button_clicked()
+{
+    easteregg==3?easteregg++:easteregg=0;
+    ui->tabWidget->setTabVisible(3,1);
+    ui->tabWidget->setCurrentIndex(3);
+}
+
+void MainWindow::on_show_manuel_button_clicked()
+{
+    easteregg==1?easteregg++:easteregg=0;
+    ui->tabWidget->setTabVisible(4,1);
+    ui->tabWidget->setCurrentIndex(4);
+}
+
+////-----------end of block-----------
+
+////////  -------- <<<<< Standardrechner >>>>> -----------
+
+QString excuseGermanComma(QString arg){
+    if(arg.contains(',')){
+        arg.replace(',','.');
+        return arg;
+    }else{
+        return arg;
+    }
+}
 
 void MainWindow::on_calWithParam_clicked(bool checked)
 {
+    ui->_n_edit->setText("");
+    ui->_p_edit->setText("");
+    ui->underEdit->setText("");
+    ui->upperEdit->setText("");
+    ui->_m_edit->setText("");
+    ui->_sigma_edit->setText("");
+    n=p=k1=k2=mu=sigma=0;
+
     if (checked){//mit Mu und Sigma rechnen
         ui->_n_label->hide();
         ui->_p_label->hide();
@@ -74,10 +193,7 @@ void MainWindow::on_calWithParam_clicked(bool checked)
 
         setToParam=2;
 
-
-        binomOutput(setToCumulative,setToParam);
-
-
+        ui->_m_edit->setFocus();
 
     }else{//mit N und P rechnen
         ui->_n_label->show();
@@ -92,14 +208,36 @@ void MainWindow::on_calWithParam_clicked(bool checked)
 
         setToParam=1;
 
-        binomOutput(setToCumulative,setToParam);
+        ui->_n_edit->setFocus();
     }
+
+    binomOutput(setToCumulative,setToParam);
+}
+
+void MainWindow::on_cumulativeP_clicked(bool checked)
+{
+    if (!checked){//binompdf -->default
+        ui->upperEdit->hide();
+        ui->upperLabel->hide();
+        ui->underLabel->setText("Ereignis");
+        ui->underEdit->setPlaceholderText("k");
+        setToCumulative=1;
+        ui->underEdit->setFocus();
+    }
+    if(checked){//binomcdf
+        ui->upperEdit->show();
+        ui->upperLabel->show();
+        ui->underLabel->setText("Untere Grenze");
+        ui->underEdit->setPlaceholderText(" ");
+        setToCumulative=2;
+        ui->upperEdit->setFocus();
+    }
+    binomOutput(setToCumulative,setToParam);
 }
 
 //j=1 --> binompdf  j=2 --> binomcdf
 //y=1 --> mit N und P rechnen y=2 --> mit Mu und Sigma rechnen
 void MainWindow::binomOutput(int j, int y){
-    //ui->hiddenOutput->setText(" ");
 
     if(y==1){
         if(n==0 or p==0 or fromNandP(n,p,mu,sigma)!=0){
@@ -120,25 +258,30 @@ void MainWindow::binomOutput(int j, int y){
     if(j==1){
         if(binompdf(n,p,k1)==-1){
             sthsWrong();
-    }else{
-            QString res =QString::number(binompdf(n,p,k1),'f',10);
-            ui->pOutput->setText(QString("P(X=%1)=%2").arg(k1).arg(res));
-        }
+        }else if(!shitstorm){
+            long double resnum =binompdf(n,p,k1);
+            QString res =QString::number(resnum,'f',10);
+            QString res2 =QString::number(resnum,'f',4);
+            QString res3 =QString::number(resnum*100,'f',2);
+            ui->pOutput->setText(QString("P(X=%1) = %2\n\t≈ %3 = %4\%").arg(k1).arg(res).arg(res2).arg(res3));
+        }else{ui->pOutput->setText(" "); shitstorm=0;}
     }
     if(j==2){
         if(binomcdf(n,p,k1,k2)==-1){
             sthsWrong();
-    }else{
-            QString res =QString::number(binomcdf(n,p,k1,k2),'f',10);
+        }else{
+            long double resnum = binomcdf(n,p,k1,k2);
+            QString res =QString::number(resnum,'f',10);
+            QString res2 =QString::number(resnum,'f',4);
+            QString res3 =QString::number(resnum*100,'f',2);
             if(!k1){//höchstens -- at most
-                ui->pOutput->setText(QString("P(X≤%1)=%2").arg(k2).arg(res));
-            }
-            else if(k2==n){//mindestens -- at least
-                ui->pOutput->setText(QString("P(X≥%1)=%2").arg(k1).arg(res));
+                ui->pOutput->setText(QString("P(X≤%1) = %2\n\t≈ %3 = %4\%").arg(k2).arg(res).arg(res2).arg(res3));
+            }else if(k2==n){//mindestens -- at least
+                ui->pOutput->setText(QString("P(X≥%1) = %2\n\t≈ %3 = %4\%").arg(k1).arg(res).arg(res2).arg(res3));
             }else if(k1==k2){//identische Grenzen -- identical limits
-                ui->pOutput->setText(QString("P(X=%1)=%2").arg(k1).arg(res));
+                ui->pOutput->setText(QString("P(X=%1) = %2\n\t≈ %3 = %4\%").arg(k1).arg(res).arg(res2).arg(res3));
             }else{//beidseitig -- two different limits
-                ui->pOutput->setText(QString("P(%1≤X≤%2)=%3").arg(k1).arg(k2).arg(res));
+                ui->pOutput->setText(QString("P(%1≤X≤%2) = %3\n\t≈ %4 = %5\%").arg(k1).arg(k2).arg(res).arg(res2).arg(res3));
             }
 
         }
@@ -147,14 +290,22 @@ void MainWindow::binomOutput(int j, int y){
 }
 
 void MainWindow::sthsWrong(){
-
-        ui->hiddenOutput->setText("Ungültige/unvollständige Eingabe!");
+    ui->hiddenOutput->setText("Ungültige/unvollständige Eingabe!");
+    ui->pOutput->setText(" ");
+    shitstorm=0;
+    ui->pOutput->setText("");
 }
+
 
 void MainWindow::on__n_edit_textChanged(const QString &arg1)
 {
-    n=arg1.toInt()>=0?arg1.toInt():0;
-    qDebug()<<"n:"<<n;
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32 && setToParam==1){
+        arg.remove(' ');
+        ui->_n_edit->setText(arg);
+        ui->_p_edit->setFocus();
+    }
+    n=arg.toInt()>=0?arg.toInt():0;
     binomOutput(setToCumulative,setToParam);
 
 }
@@ -162,88 +313,1052 @@ void MainWindow::on__n_edit_textChanged(const QString &arg1)
 
 void MainWindow::on__p_edit_textChanged(const QString &arg1)
 {
-    p=arg1.toDouble()>=0?arg1.toDouble():0;
-    qDebug()<<"p:"<<p;
+    QString arg=excuseGermanComma(arg1);
+    if(arg!=NULL && arg[arg.length()-1]==(char)32 && setToParam==1){
+        arg.remove(' ');
+        ui->_p_edit->setText(arg);
+        ui->underEdit->setFocus();
+    }
+    p=arg.toDouble()>=0?arg.toDouble():0;
     binomOutput(setToCumulative,setToParam);
 }
 
 
 void MainWindow::on_underEdit_textChanged(const QString &arg1)
 {
-    k1=arg1.toInt()>=0?arg1.toInt():0;
-    qDebug()<<"k1:"<<k1;
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->underEdit->setText(arg);
+        if(setToParam==1) setToCumulative==1? ui->_n_edit->setFocus():ui->upperEdit->setFocus();
+        if(setToParam==2) setToCumulative==1? ui->_m_edit->setFocus():ui->upperEdit->setFocus();
+    }
+
+    k1=arg.toInt()>=0?arg.toInt():0;
+    if(!k1 && arg!="0") shitstorm=1;
     binomOutput(setToCumulative,setToParam);
 }
 
 
 void MainWindow::on_upperEdit_textChanged(const QString &arg1)
 {
-    k2=arg1.toInt()>=0?arg1.toInt():0;
-    qDebug()<<"k2:"<<k2;
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->upperEdit->setText(arg);
+        setToParam==1?ui->_n_edit->setFocus():ui->_m_edit->setFocus();
+    }
+    k2=arg.toInt()>=0?arg.toInt():0;
+    if(!k2 && arg!="0") shitstorm=1;
     binomOutput(setToCumulative,setToParam);
 }
 
-
-void MainWindow::on_cumulativeP_clicked(bool checked)
-{
-    if (!checked){//binompdf -->default
-        ui->upperEdit->hide();
-        ui->upperLabel->hide();
-        ui->underLabel->setText("Ereignis");
-        ui->underEdit->setPlaceholderText("k");
-        setToCumulative=1;
-        binomOutput(setToCumulative,setToParam);
-    }
-    if(checked){//binomcdf
-        ui->upperEdit->show();
-        ui->upperLabel->show();
-        ui->underLabel->setText("untere Grenze");
-        ui->underEdit->setPlaceholderText(" ");
-        setToCumulative=2;
-        binomOutput(setToCumulative,setToParam);
-    }
-}
-
-
 void MainWindow::on__m_edit_textChanged(const QString &arg1)
 {
-    mu=arg1.toDouble()>=0?arg1.toDouble():0;
-    qDebug()<<"mu:"<<mu;
+    QString arg=excuseGermanComma(arg1);
+    if(arg!=NULL && arg[arg.length()-1]==(char)32 && setToParam==2){
+        arg.remove(' ');
+        ui->_m_edit->setText(arg);
+        ui->_sigma_edit->setFocus();
+    }
+    mu=arg.toDouble()>=0?arg.toDouble():0;
     binomOutput(setToCumulative,setToParam);
 }
 
 
 void MainWindow::on__sigma_edit_textChanged(const QString &arg1)
 {
-    sigma=arg1.toDouble()>=0?arg1.toDouble():0;
-    qDebug()<<"sigma:"<<sigma;
+    QString arg=excuseGermanComma(arg1);
+    if(arg!=NULL && arg[arg.length()-1]==(char)32 && setToParam==2){
+        arg.remove(' ');
+        ui->_sigma_edit->setText(arg);
+        ui->underEdit->setFocus();
+    }
+    sigma=arg.toDouble()>=0?arg.toDouble():0;
     binomOutput(setToCumulative,setToParam);
 }
 
-/*  ---not figured out yet---
+///////// ----------- end of block -----------
+
+///////// ----- <<<<<Show Histogramm>>>>> ------
+
+void MainWindow::on_savePNG_clicked(bool checked)
+{
+    if(checked){hSt=1;histoAni=0;}else{hSt=0;histoAni=1;}
+}
+
+QString getDocPath(){
+    QString res, docdir(getenv("USERPROFILE"));
+    for(int i=0;i<docdir.length();i++){
+        if(docdir[i]==(char)92){
+            res.append('/');
+        }else{
+            res.append(docdir[i]);
+        }
+    }
+    res.append("/Documents/Binomialrechner");
+    return res;
+}
+void pngexport(QChartView* chartView, int histocount, quint32 rando){
+
+    QPixmap p = chartView->grab();
+    QOpenGLWidget *glWidget  = chartView->findChild<QOpenGLWidget*>();
+    if(glWidget){
+        QPainter painter(&p);
+        QPoint d = glWidget->mapToGlobal(QPoint())-chartView->mapToGlobal(QPoint());
+        painter.setCompositionMode(QPainter::CompositionMode_SourceAtop);
+        painter.drawImage(d, glWidget->grabFramebuffer());
+        painter.end();
+    }
+
+    QString docPath=getDocPath();
+    QDir dir(QString("%1/SitzungsID%2").arg(docPath).arg(rando));
+    if (!dir.exists()) dir.mkpath(".");
+    qDebug()<<"PNG save:"<<p.save(QString("%1/%2/histogramm no.%3.png").arg(docPath).arg(dir.dirName()).arg(histocount));
+}
+
+void MainWindow::on_showPNGTarget_clicked()
+{
+    QDesktopServices::openUrl( QUrl::fromLocalFile(QString("%1/SitzungsID%2").arg(getDocPath()).arg(histo_png_rando)));
+}
+
 void MainWindow::on_showHisto_clicked()
 {
-    QBarSet* disto = new QBarSet("n");
-    for (int i = 0; i <= n; ++i) {
-        *disto<<binompdf(n,p,i);
+    QMessageBox mes;
+    mes.setWindowTitle("Warnung");
+    if(n==0 or p==0 or n>=30000 or p>=1){
+        mes.setText("Keine sinnvoll darstellbare Histogramme für n und p!\t");
+        mes.exec();
+        return;
     }
+    QString title=QString("Binomialverteilung für n=%1 p=%2\n(μ=%3  σ=%4)").arg(n).arg(p).arg(mu).arg(sigma);
+    QBarSet* disto = new QBarSet(title);
+
+    for (int i = 0; i <= n; ++i) {
+        disto->append(binompdf(n,p,i));
+    }
+
     QBarSeries *series = new QBarSeries();
+    series->setBarWidth(1);
     series->append(disto);
     QChart *chart = new QChart();
-
     chart->addSeries(series);
+    if(histoAni){
+        chart->setAnimationOptions(QChart::AllAnimations);
+    }else{
+        chart->setAnimationOptions(QChart::NoAnimation);
+    }
 
-    chart->setTitle("Histogramm");
+/*
+    auto axisX0 = new QBarCategoryAxis;
+    for(int i = 0; i <= n; ++i){
+        axisX0->append(QString::number(i));
+    }
+    chart->addAxis(axisX0, Qt::AlignBottom);
 
-    chart->setAnimationOptions(QChart::AllAnimations);
+    series->attachAxis(axisX0);
+*/
+    auto axisX = new QValueAxis;
+
+    if(n<1221){
+      axisX->setRange(0,n);
+      axisX->setTickCount(perfectspacing(n)+1);
+    }else{
+      axisX->setRange(round(mu-5*sigma),round(mu+5*sigma));
+      axisX->setTickCount(perfectspacing(round(mu+5*sigma)-round(mu-5*sigma))+1);
+      mes.setText("    x-Achse stellt nur noch Werte im 5-σ Intervall dar!\t\n\tDarstellung bis n=30000 möglich.\t");
+      mes.exec();
+    }
+
+    chart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+
+    auto axisY = new QValueAxis;
+    axisY->setRange(0,binompdf(n,p,round(mu))+0.005);
+
+    chart->addAxis(axisY, Qt::AlignLeft);
+    series->attachAxis(axisY);
+
 
     QChartView *chartView = new QChartView(chart);
     chartView->setRenderHint(QPainter::Antialiasing);
+    chartView->adjustSize();
+    chartView->chart()->setTheme(QChart::ChartThemeBrownSand);
+    int c=ui->tabWidget->count();
+    ui->tabWidget->insertTab(c,chartView,QString(">>Histo No.%1").arg(++histocount));
+    ui->tabWidget->setCurrentIndex(c);
+    if(hSt){
+      if(n>150 && tipSt){
+            mes.setWindowTitle("Tipp!");
+            mes.setText("Vergrößern Sie das Fenster für bessere Bilder bei großem n!\t");
+            mes.exec();
+            tipSt--;
+      }
+      pngexport(chartView,histocount,histo_png_rando);
+    }
+}
+////-----------end of block-----------
+
+///////// ----- <<<<<Show Table>>>>> ------
+
+void MainWindow::on_tSt1_clicked(bool checked)
+{
+    if(checked){tSt1=1;}else{tSt1=0;}
+}
 
 
+void MainWindow::on_tSt2_clicked(bool checked)
+{
+    if(checked){tSt2=1;}else{tSt2=0;}
+}
 
-    grScene.addWidget(chartView);
-    ui->graphicsView->setScene(&grScene);
+
+void MainWindow::on_tSt3_clicked(bool checked)
+{
+    if(checked){tSt3=1;}else{tSt3=0;}
+}
+
+void MainWindow::on_saveCSV_clicked(bool checked)
+{
+    if(checked){tSSt=1;}else{tSSt=0;}
+}
+
+void MainWindow::on_showTable_clicked()
+{
+    QMessageBox mes;
+    mes.setWindowTitle("Warnung");
+    if(n<=2 or p==0 or p>=1 or (n>50000&&((tSt1&&tSt2&&tSt3) or tSt2 or tSt3)) or(!tSt1&&!tSt2&&!tSt3) or(n>100000&&tSt1&&!tSt2&&!tSt3)){
+        mes.setText("Keine sinnvoll darstellbare Tabellen für n und p!\t");
+        mes.exec();
+        return;
+    }
+    if(n>=5000){
+        mes.setText("Ab n=5000 könnte die Erstellung der Tabelle etwas Zeit in Anspruch nehmen.\n(Maximaler Wert für die Erstellung aller Tabellen: n=50000)\nBitte seien Sie geduldig!\t");
+        mes.exec();
+    }
+
+    auto tableWidget = new QTableWidget(n+1, 5, this);
+    QStringList nullist,col0,col1,col2,col3,col4,headers={"k","P(X=k)","P(X≤k)","P(X≥k)","Eckdaten"};
+    tableWidget->setHorizontalHeaderLabels(headers);
+    QFont sansFont("Helvetica [Cronyx]", 11);
+    for (int i=0; i<=n; ++i) {//numerating and setting up
+        nullist.append("");
+        tableWidget->setItem(i, 0, new QTableWidgetItem(tr(" %1 ").arg(i)));
+        if(tSSt)col0.append(QString::number(i));
+        tableWidget->item(i,0)->setFont(sansFont);
+    }
+    tableWidget->setVerticalHeaderLabels(nullist);
+    long double pdfStdArray [n+1];
+    for (int i=0;i<=n;++i){
+        pdfStdArray[i]=binompdf(n,p,i);
+    }
+    int lower=round(mu-5*sigma);
+    int higher=round(mu+5*sigma);
+
+    if(tSt1){
+    for (int i=0; i<=n; ++i) {//binompdf col1
+        if(i<lower or i>higher){
+            tableWidget->setItem(i, 1, new QTableWidgetItem(tr(" %1 ").arg(QString::number(0))));
+            if(tSSt)col1.append(QString::number(0));
+            tableWidget->item(i,1)->setFont(sansFont);
+            continue;
+        }
+        QString tmp = QString::number(pdfStdArray[i],'f',5);
+        if(tmp=="0.00000") tmp=QString::number(0);
+        tableWidget->setItem(i, 1, new QTableWidgetItem(tr(" %1 ").arg(tmp)));
+        if(tSSt)col1.append(tr("%1").arg(tmp));
+        tableWidget->item(i,1)->setFont(sansFont);
+    }
+    }
+    if(tSt2){
+    long double sum=0;
+    for (int i=0; i<=n; ++i) {//binomcdf(0,k) col2
+        sum+=pdfStdArray[i];
+        if(i<lower){
+            tableWidget->setItem(i, 2, new QTableWidgetItem(tr(" %1 ").arg(0)));
+            if(tSSt)col2.append(QString::number(0));
+            tableWidget->item(i,2)->setFont(sansFont);
+            continue;
+        }
+        if(i>higher){
+            tableWidget->setItem(i, 2, new QTableWidgetItem(tr(" %1 ").arg(1)));
+            if(tSSt)col2.append(QString::number(1));
+            tableWidget->item(i,2)->setFont(sansFont);
+            continue;
+        }
+        QString tmp = QString::number(sum,'f',5);
+        if(tmp=="0.00000") tmp=QString::number(0);
+        if(tmp=="1.00000") tmp=QString::number(1);
+        tableWidget->setItem(i, 2, new QTableWidgetItem(tr(" %1 ").arg(tmp)));
+        if(tSSt)col2.append(tr("%1").arg(tmp));
+        tableWidget->item(i,2)->setFont(sansFont);
+    }
+    }
+    if(tSt3){
+    long double sum=1;
+    for (int i=0; i<=n; ++i) {//binomcdf(k,n) col3
+        if(!i){sum=1;}else{sum-=pdfStdArray[i-1];}
+        if(i<round(lower)){
+            tableWidget->setItem(i, 3, new QTableWidgetItem(tr(" %1 ").arg(1)));
+            if(tSSt)col3.append(QString::number(1));
+            tableWidget->item(i,3)->setFont(sansFont);
+            continue;
+        }
+        if(i>round(higher)){
+            tableWidget->setItem(i, 3, new QTableWidgetItem(tr(" %1 ").arg(0)));
+            if(tSSt)col3.append(QString::number(0));
+            tableWidget->item(i,3)->setFont(sansFont);
+            continue;
+        }
+        QString tmp = QString::number(sum,'f',5);
+        if(tmp=="0.00000") tmp=QString::number(0);
+        if(tmp=="1.00000") tmp=QString::number(1);
+        tableWidget->setItem(i, 3, new QTableWidgetItem(tr(" %1 ").arg(tmp)));
+        if(tSSt)col3.append(tr("%1").arg(tmp));
+        tableWidget->item(i,3)->setFont(sansFont);
+    }
+    }
+
+    //eckdaten
+    tableWidget->setItem(0,4,new QTableWidgetItem(tr(" n=%1 ").arg(n)));
+    tableWidget->setItem(1,4,new QTableWidgetItem(tr(" p=%1 ").arg(p)));
+    tableWidget->setItem(2,4,new QTableWidgetItem(tr(" μ=%1 ").arg(mu)));
+    tableWidget->setItem(3,4,new QTableWidgetItem(tr(" σ=%1 ").arg(sigma)));
+    col4.append(tr(" n=%1 ").arg(n));
+    col4.append(tr(" p=%1 ").arg(p));
+    col4.append(tr(" μ=%1 ").arg(mu));
+    col4.append(tr(" σ=%1 ").arg(sigma));
+    for(int i=0;i<=3;i++){
+        tableWidget->item(i,4)->setFont(sansFont);
+    }
+
+    int c=ui->tabWidget->count();
+    ui->tabWidget->insertTab(c,tableWidget,QString(">>Tabelle No.%1").arg(++tablecount));
+    ui->tabWidget->setCurrentIndex(c);
+
+    QString docPath=getDocPath();
+
+    if(tSSt){
+        QDir dir(QString("%1/SitzungsID%2").arg(docPath).arg(histo_png_rando));
+    if (!dir.exists()) dir.mkpath(".");
+
+    QString dir_name(QString("%1/SitzungsID%2/tabelle no.%3").arg(docPath).arg(histo_png_rando).arg(tablecount));
+    QFile data(dir_name+".csv");
+    if (data.open(QFile::WriteOnly | QIODevice::Append)){}
+    QTextStream output(&data);
+    output <<"n"<< ";"<<"P(X=k)"<< ";"<<"P(X<=k)"<< ";"<<"P(X>=k)"<<";"<<"Eckdaten"<<'\n';
+    for(int i=0;i<=n; i++) {
+        output  <<col0[i]<< ";" << (tSt1?col1[i]:"") <<";" << (tSt2?col2[i]:"") <<";" << (tSt3?col3[i]:"") <<";"<< (i<4?col4[i]:" ") << '\n';
+    }
+
+    data.close();
+
+    }
+}
+////-----------end of block-----------
+
+////  ---  <<< Wichtige Funktionen WF-Block >>> ---
+
+void MainWindow::wfOutput(int id){
+    switch (id){
+        case 1://wf_pow
+        {
+        powtmp->res=1;
+        wf_pow(powtmp);
+        if(powtmp->shitsPivoted==1){
+            ui->wf_factorial_out->setText("Ungültige Eingabe");
+            powtmp->shitsPivoted=0;
+            powtmp->overflow=0;
+        }else if(powtmp->overflow==0&&powtmp->k>=0){
+            ui->wf_factorial_out->setText(QString("%1^%2 = %3").arg(powtmp->n).arg(powtmp->k).arg(QString::number(powtmp->res,'f',0)));
+        }else if(powtmp->overflow==0&&powtmp->k<0){
+            ui->wf_factorial_out->setText(QString("%1^%2 = %3").arg(powtmp->n).arg(powtmp->k).arg(QString::number(powtmp->res,'f',10)));
+        }else{
+            ui->wf_factorial_out->setText(QString("%1^%2 = %3   E%4").arg(powtmp->n).arg(powtmp->negative?-(powtmp->k):powtmp->k).arg(QString::number(powtmp->res,'f',7)).arg(powtmp->overflow));
+            powtmp->overflow=powtmp->negative=0;
+        }
+
+        }break;
+
+        case 2://wf_npr
+        {
+        wf_npr(nprtmp);
+        if(nprtmp->shitsPivoted==1){
+            ui->wf_factorial_out->setText("Ungültige Eingabe");
+            nprtmp->shitsPivoted=0;
+        }else if(nprtmp->overflow==0){
+            ui->wf_factorial_out->setText(QString("%1 P %2 = %3").arg(nprtmp->n).arg(nprtmp->k).arg(QString::number(nprtmp->res,'f',0)));
+        }else{
+            QString tmp=QString::number(nprtmp->res,'f',5);
+            ui->wf_factorial_out->setText(QString("%1 P %2 = %3   E%4").arg(nprtmp->n).arg(nprtmp->k).arg(tmp=="inf"?"∞":tmp).arg(tmp=="inf"?0:nprtmp->overflow));
+            nprtmp->overflow=0;
+
+        }//!!!!!! write inf stuff better !!!!!!
+
+        }break;
+
+        case 3://wf_ncr
+        {
+        wf_ncr(ncrtmp);
+        if(ncrtmp->shitsPivoted==1){
+            ui->wf_factorial_out->setText("Ungültige Eingabe");
+            ncrtmp->shitsPivoted=0;
+        }else if(ncrtmp->overflow==0){
+            ui->wf_factorial_out->setText(QString("%1 C %2 = %3").arg(ncrtmp->n).arg(ncrtmp->k).arg(QString::number(ncrtmp->res,'f',0)));
+        }else{
+            QString tmp=QString::number(ncrtmp->res,'f',5);
+            ui->wf_factorial_out->setText(QString("%1 C %2 = %3   E%4").arg(ncrtmp->n).arg(ncrtmp->k).arg(tmp=="inf"?"∞":tmp).arg(tmp=="inf"?0:ncrtmp->overflow));
+            ncrtmp->overflow=0;
+        }
+
+        }break;
+    }
+}
+void MainWindow::on_wf_factorial_edit_textChanged(const QString &arg1)
+{
+    wf* tmp= new wf;
+    tmp->n=arg1.toDouble();
+    if(!tmp->n && arg1!="0") tmp->shitsPivoted=1;
+    wf_factorial(tmp);
+    if(tmp->shitsPivoted==1){
+        ui->wf_factorial_out->setText("Ungültige Eingabe");
+        tmp->shitsPivoted=0;
+    }else if(tmp->overflow==0){
+        ui->wf_factorial_out->setText(QString("%1! = %2").arg(tmp->n).arg(QString::number(tmp->res,'f',0)));
+    }else{
+        ui->wf_factorial_out->setText(QString("%1! = %2   E%3").arg(tmp->n).arg(QString::number(tmp->res,'f',5)).arg(tmp->overflow));
+        tmp->overflow=0;
+    }
+}
+
+
+void MainWindow::on_wf_n_pow_edit_textChanged(const QString &arg1)
+{
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->wf_n_pow_edit->setText(arg);
+        ui->wf_k_pow_edit->setFocus();
+    }
+    powtmp->n=arg.toDouble();
+    if(!powtmp->n && arg!="0") powtmp->shitsPivoted=1;
+    wfOutput(1);
+}
+
+
+void MainWindow::on_wf_k_pow_edit_textChanged(const QString &arg1)
+{
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->wf_k_pow_edit->setText(arg);
+        ui->wf_n_pow_edit->setFocus();
+    }
+    powtmp->k=arg.toDouble();
+    if(!powtmp->k && arg!="0") powtmp->shitsPivoted=1;
+    wfOutput(1);
+}
+
+
+void MainWindow::on_wf_n_npr_edit_textChanged(const QString &arg1)
+{
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->wf_n_npr_edit->setText(arg);
+        ui->wf_r_npr_edit->setFocus();
+    }
+    nprtmp->n=arg.toDouble();
+    if(!nprtmp->n && arg!="0") nprtmp->shitsPivoted=1;
+    wfOutput(2);
+}
+
+
+void MainWindow::on_wf_r_npr_edit_textChanged(const QString &arg1)
+{
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->wf_r_npr_edit->setText(arg);
+        ui->wf_n_npr_edit->setFocus();
+    }
+    nprtmp->k=arg.toDouble();
+    if(!nprtmp->k && arg!="0") nprtmp->shitsPivoted=1;
+    wfOutput(2);
+}
+
+
+void MainWindow::on_wf_n_ncr_edit_textChanged(const QString &arg1)
+{
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->wf_n_ncr_edit->setText(arg);
+        ui->wf_r_ncr_edit->setFocus();
+    }
+    ncrtmp->n=arg.toDouble();
+    if(!ncrtmp->n && arg!="0") ncrtmp->shitsPivoted=1;
+    wfOutput(3);
+}
+
+
+void MainWindow::on_wf_r_ncr_edit_textChanged(const QString &arg1)
+{
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->wf_r_ncr_edit->setText(arg);
+        ui->wf_n_ncr_edit->setFocus();
+    }
+    ncrtmp->k=arg.toDouble();
+    if(!ncrtmp->k && arg!="0") ncrtmp->shitsPivoted=1;
+    wfOutput(3);
+}
+
+////// ----------end of block--------------
+
+////  ---  <<< Parameter Retrieval Kit PRK-Block >>> ---
+
+void MainWindow::prkClearUp(){
+    prkObj->resetprk();
+    ui->prk_n_edit->clear();
+    ui->prk_p_edit->clear();
+    ui->prk_k1_edit->clear();
+    ui->prk_k2_edit->clear();
+    ui->prk_n_out->setText("n=?");
+    ui->prk_p_out->setText("p=?");
+    ui->prk_k1_out->setText("?");
+    ui->prk_k2_out->setText("?");
+    ui->prk_target_probability->clear();
+}
+void MainWindow::on_prk_targetParameter_currentIndexChanged(int index)
+{
+    if(ui->prk_k1_edit->isHidden())ui->prk_k1_edit->show();
+    if(ui->prk_k2_edit->isHidden())ui->prk_k2_edit->show();
+    if(ui->prk_n_edit->isHidden())ui->prk_n_edit->show();
+    if(ui->prk_p_edit->isHidden())ui->prk_p_edit->show();
+
+    if(ui->prk_k1_out->isHidden())ui->prk_k1_out->show();
+    if(ui->prk_k2_out->isHidden())ui->prk_k2_out->show();
+    if(ui->prk_n_out->isHidden())ui->prk_n_out->show();
+    if(ui->prk_p_out->isHidden())ui->prk_p_out->show();
+
+    prkClearUp();
+    ui->prk_p_edit->setFocus();
+
+    if(prk_cumulative){
+        ui->prk_compStatement->setText("≤ X ≤");
+    switch(index){
+    case 0://n
+    {
+        ui->prk_n_edit->hide();
+        ui->prk_p_out->hide();
+        ui->prk_k1_out->hide();
+        ui->prk_k2_out->hide();
+        prk_missing=1;
+        prk_circular_index=4;
+        break;
+    }
+    case 1://p
+    {
+        ui->prk_p_edit->hide();
+        ui->prk_n_out->hide();
+        ui->prk_k1_out->hide();
+        ui->prk_k2_out->hide();
+        prk_missing=2;
+        prk_circular_index=5;
+        break;
+    }
+    case 2://k1
+    {
+        ui->prk_n_out->hide();
+        ui->prk_p_out->hide();
+        ui->prk_k1_edit->hide();
+        ui->prk_k2_out->hide();
+        prk_missing=4;
+        prk_circular_index=6;
+        break;
+    }
+    case 3://k2
+    {
+        ui->prk_n_out->hide();
+        ui->prk_p_out->hide();
+        ui->prk_k1_out->hide();
+        ui->prk_k2_edit->hide();
+        prk_missing=5;
+        prk_circular_index=7;
+        break;
+    }
+    }
+    }else if(!prk_cumulative){//---------------------------------------------
+            ui->prk_k1_out->hide();
+            ui->prk_k1_edit->hide();
+            ui->prk_compStatement->setText("X =");
+
+    switch(index){
+    case 0://n
+    {
+        ui->prk_n_edit->hide();
+        ui->prk_p_out->hide();
+        ui->prk_k2_out->hide();
+        prk_missing=1;
+        prk_circular_index=1;
+        break;
+    }
+    case 1://p
+    {
+        ui->prk_p_edit->hide();
+        ui->prk_n_out->hide();
+        ui->prk_k2_out->hide();
+        prk_missing=2;
+        prk_circular_index=2;
+        break;
+    }
+    case 2://k
+    {
+        ui->prk_n_out->hide();
+        ui->prk_p_out->hide();
+        ui->prk_k2_edit->hide();
+        prk_missing=3;
+        prk_circular_index=3;
+        break;
+    }
+    }
+}
+}
+
+void MainWindow::prkCirculate(int circle, QString callee){
+    switch (circle){
+///----------------------------prk_cumulative==0
+    case 1://p->k2->er
+    {
+        if(callee=="p")ui->prk_k2_edit->setFocus();
+        if(callee=="k2")ui->prk_target_probability->setFocus();
+        if(callee=="er")ui->prk_p_edit->setFocus();
+        break;
+    }
+    case 2://n->k2->er
+    {
+        if(callee=="n")ui->prk_k2_edit->setFocus();
+        if(callee=="k2")ui->prk_target_probability->setFocus();
+        if(callee=="er")ui->prk_n_edit->setFocus();
+        break;
+    }
+    case 3://n->p->er
+    {
+        if(callee=="n")ui->prk_p_edit->setFocus();
+        if(callee=="p")ui->prk_target_probability->setFocus();
+        if(callee=="er")ui->prk_n_edit->setFocus();
+        break;
+    }
+///----------------------------prk_cumulative==1
+    case 4://p->k1->k2->er
+    {
+        if(callee=="p")ui->prk_k1_edit->setFocus();
+        if(callee=="k1")ui->prk_k2_edit->setFocus();
+        if(callee=="k2")ui->prk_target_probability->setFocus();
+        if(callee=="er")ui->prk_p_edit->setFocus();
+        break;
+    }
+    case 5://n->k1->k2->er
+    {
+        if(callee=="n")ui->prk_k1_edit->setFocus();
+        if(callee=="k1")ui->prk_k2_edit->setFocus();
+        if(callee=="k2")ui->prk_target_probability->setFocus();
+        if(callee=="er")ui->prk_n_edit->setFocus();
+        break;
+    }
+    case 6://n->p->k2->er
+    {
+        if(callee=="n")ui->prk_p_edit->setFocus();
+        if(callee=="p")ui->prk_k2_edit->setFocus();
+        if(callee=="k2")ui->prk_target_probability->setFocus();
+        if(callee=="er")ui->prk_n_edit->setFocus();
+        break;
+    }
+    case 7://n->p->k1->er
+    {
+        if(callee=="n")ui->prk_p_edit->setFocus();
+        if(callee=="p")ui->prk_k1_edit->setFocus();
+        if(callee=="k1")ui->prk_target_probability->setFocus();
+        if(callee=="er")ui->prk_n_edit->setFocus();
+        break;
+    }
+    }
+}
+
+void MainWindow::on_prk_cumulativeP_clicked(bool checked)
+{
+    prkClearUp();
+    if(checked){
+        prk_cumulative=1;
+        ui->prk_targetParameter->clear();
+        ui->prk_targetParameter->addItems({"Stichprobenumfang n","Trefferquote p","Untere Grenze k1","Obere Grenze k2"});
+
+    }else{
+        prk_cumulative=0;
+        ui->prk_targetParameter->clear();
+        ui->prk_targetParameter->addItems({"Stichprobenumfang n","Trefferquote p","Ereignis k"});
+    }
+}
+
+
+void MainWindow::on_prk_n_edit_textEdited(const QString &arg1)
+{
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->prk_n_edit->setText(arg);
+        prkCirculate(prk_circular_index,"n");
+    }
+    prkObj->n=arg.toInt()>=0?arg.toInt():-1;
+    if(!prkObj->n && arg!="0") prk_cought_fire=1;
+    prkOutput(prk_missing);
+}
+
+
+void MainWindow::on_prk_p_edit_textEdited(const QString &arg1)
+{
+    QString arg=excuseGermanComma(arg1);
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->prk_p_edit->setText(arg);
+        prkCirculate(prk_circular_index,"p");
+    }
+    prkObj->p=arg.toDouble()>=0?arg.toDouble():-1;
+    if(!prkObj->p && arg!="0") prk_cought_fire=1;
+    prkOutput(prk_missing);
+}
+
+
+void MainWindow::on_prk_k1_edit_textEdited(const QString &arg1)
+{
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->prk_k1_edit->setText(arg);
+        prkCirculate(prk_circular_index,"k1");
+    }
+    prkObj->k1=arg.toInt()>=0?arg.toInt():-1;
+    if(!prkObj->k1 && arg!="0") prk_cought_fire=1;
+    prkOutput(prk_missing);
+}
+
+
+void MainWindow::on_prk_k2_edit_textEdited(const QString &arg1)
+{
+    QString arg=arg1;
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->prk_k2_edit->setText(arg);
+        prkCirculate(prk_circular_index,"k2");
+    }
+    if(!prk_cumulative){
+        prkObj->k=arg.toInt()>=0?arg.toInt():-1;
+        if(!prkObj->k && arg!="0") prk_cought_fire=1;
+    }
+    if(prk_cumulative){
+        prkObj->k2=arg.toInt()>=0?arg.toInt():-1;
+        if(!prkObj->k2 && arg!="0") prk_cought_fire=1;
+    }
+    prkOutput(prk_missing);
+}
+
+
+void MainWindow::on_prk_target_probability_textEdited(const QString &arg1)
+{
+    QString arg=excuseGermanComma(arg1);
+    if(arg!=NULL && arg[arg.length()-1]==(char)32){
+        arg.remove(' ');
+        ui->prk_target_probability->setText(arg);
+        prkCirculate(prk_circular_index,"er");
+    }
+    prkObj->pRes=arg.toDouble()>0?arg.toDouble():-1;
+    if(!prkObj->pRes && arg!="0") prk_cought_fire=1;
+    prkOutput(prk_missing);
+}
+
+void MainWindow::on_prk_2nd_compStatement_currentIndexChanged(int index)
+{
+    prkObj->cmpstatus=index;
+    prkOutput(prk_missing);
+}
+
+void MainWindow::on_prk_goToStd_clicked()
+{
+    if(setToParam==2){
+        ui->calWithParam->setCheckState(Qt::Unchecked);
+        on_calWithParam_clicked(0);
+    }
+    if(!prk_cumulative){
+        ui->cumulativeP->setCheckState(Qt::Unchecked);
+        on_cumulativeP_clicked(0);
+        n=prkObj->n;    ui->_n_edit->setText(QString::number(n));
+        p=prkObj->p;    ui->_p_edit->setText(QString::number(p));
+        k1=prkObj->k;   ui->underEdit->setText(QString::number(k1));
+    }else{
+        ui->cumulativeP->setCheckState(Qt::Checked);
+        on_cumulativeP_clicked(1);
+        n=prkObj->n;    ui->_n_edit->setText(QString::number(n));
+        p=prkObj->p;    ui->_p_edit->setText(QString::number(p));
+        k1=prkObj->k1;   ui->underEdit->setText(QString::number(k1));
+        k2=prkObj->k2;   ui->upperEdit->setText(QString::number(k2));
+    }
+    ui->tabWidget->setTabVisible(1,1);
+    ui->tabWidget->setCurrentIndex(1);
+}
+
+void MainWindow::prkOutput(int missing){//missing: n<=>1 p<=>2 k<=>3 k1<=>4 k2<=>5
+    switch (missing){
+        case 1:{
+            if(prkObj->p==0){ ui->prk_n_out->setText("n=? (Ungültige Eingabe)"); break;}
+            int tmp=prkObj->nMissing(prk_cumulative);
+            QString cmp=prkObj->cmpstatus?"≤":"≥";
+            if(prk_cought_fire)tmp=-1;
+            qDebug()<<"ntmp:"<<tmp;
+            if(tmp!=-1){ui->prk_n_out->setText(QString("n%1%2").arg(cmp).arg(tmp));}else{ui->prk_n_out->setText("n=? (Ungültige Eingabe)");prk_cought_fire++;}
+            break;
+        }//"≥","≤"
+        case 2:{
+            double tmp=prkObj->pMissing(prk_cumulative);
+            QString cmp=prkObj->cmpstatus?(prk_cumulative?(prkObj->k1?"≤":"≥"):(prkObj->k?"≤":"≥")):(prk_cumulative?(prkObj->k1?"≥":"≤"):(prkObj->k?"≥":"≤"));
+            if(prk_cought_fire)tmp=-1;
+            qDebug()<<"ptmp:"<<tmp;
+            if(tmp!=-1){ui->prk_p_out->setText(QString("p%1%2").arg(cmp).arg(tmp));}else{ui->prk_p_out->setText("p=? (Ungültige Eingabe)");prk_cought_fire++;}
+            break;
+        }
+        case 3:{
+            int tmp=prkObj->kMissing(prk_cumulative);
+            if(prk_cought_fire)tmp=-1;
+            qDebug()<<"ktmp:"<<tmp;
+            if(tmp!=-1){ui->prk_k2_out->setText(QString("%1").arg(tmp));}else{ui->prk_k2_out->setText(" ? (Ungültige Eingabe)");prk_cought_fire++;}
+            break;
+        }
+        case 4:{
+            int tmp=prkObj->k1Missing(prk_cumulative);
+            if(prk_cought_fire)tmp=-1;
+            qDebug()<<"k1tmp:"<<tmp;
+            if(tmp!=-1){ui->prk_k1_out->setText(QString("%1").arg(tmp));}else{ui->prk_k1_out->setText(" ? (Ungültige Eingabe)");prk_cought_fire++;}
+            break;
+        }
+        case 5:{
+            int tmp=prkObj->k2Missing(prk_cumulative);
+            if(prk_cought_fire)tmp=-1;
+            qDebug()<<"k2tmp:"<<tmp;
+            if(tmp!=-1){ui->prk_k2_out->setText(QString("%1").arg(tmp));}else{ui->prk_k2_out->setText(" ? (Ungültige Eingabe)");prk_cought_fire++;}
+            break;
+        }
+    }
+
+    double localMu=0,localSigma=0;
+    if(fromNandP(prkObj->n,prkObj->p,localMu,localSigma)==-1)
+    {
+        ui->prk_mu_sigma->setText("(μ=?      σ=?)(Ungültige Eingabe)");
+    }else{
+
+        ui->prk_mu_sigma->setText(QString("(μ=%1      σ=%2)").arg(localMu).arg(localSigma));
+    }
+        prk_cought_fire=0;
+}
+
+////// ----------end of block--------------
+
+///// ------<<<<<Lucky Block>>>>>------- (other)
+
+void MainWindow::on_lucky_button_clicked()
+{
+    quint32 rando1=QRandomGenerator::global()->bounded(8);
+    while(rando1==3)rando1=QRandomGenerator::global()->bounded(8);
+    signal=0;
+    easteregg==2?easteregg++:easteregg=0;
+    switch (rando1){
+    case 1:
+    {
+            this->resize(1480,870);
+            this->move(200,50);
+            ui->textBrowserX->setHtml(pi);
+            break;
+    }
+    case 2:
+    {
+            this->resize(1480,980);
+            this->move(200,50);
+            ui->textBrowserX->setHtml(bridge);
+            break;
+    }
+    case 3:
+    {/*
+            this->resize(900,535);
+            this->move(300,200);
+            //ui->textBrowserX->setFont(QFont("Monaco"));
+            //ui->textBrowserX->setText(lucky2);
+            ui->lucky_button->setText(lucky);
+            luckyLoki();
+    */
+            break;
+    }
+    case 4:
+    {
+            this->resize(1234,750);
+            this->move(300,90);
+            ui->textBrowserX->setHtml(fiat);
+            break;
+    }
+    case 5:
+    {
+            this->resize(1234,870);
+            this->move(300,50);
+            ui->textBrowserX->setHtml(jasmine);
+            break;
+    }
+    case 6:
+    {
+            this->resize(1234,970);
+            this->move(300,50);
+            ui->textBrowserX->setHtml(beach);
+            break;
+    }
+
+    default:
+    {
+            this->resize(1480,980);
+            this->move(200,50);
+            ui->textBrowserX->setHtml(bridge);
+            break;
+    }
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent* event){
+    currentSTDW=event->size().width();
+    currentSTDH=event->size().height();
+    qDebug()<<"width:"<<currentSTDW<<"\t";
+    qDebug()<<"height:"<<currentSTDH<<"\n";
+    if((currentSTDW==(sysXmax) or currentSTDH==(sysYmax-40))&&!running){
+            signal=0;
+            changeSizeEvent();
+    }
+}
+
+void MainWindow::on_instructionsTo_currentIndexChanged(int index)
+{
+    ui->instructionsBrowser->setOpenExternalLinks(1);
+    switch (index){
+    case 0:{
+            ui->instructionsBrowser->setHtml(general_ins);
+            break;
+    }
+    case 1:{
+            ui->instructionsBrowser->setHtml(stdCal_ins);
+            break;
+    }
+    case 2:{
+            ui->instructionsBrowser->setHtml(wf_ins);
+            break;
+    }
+    case 3:{
+            ui->instructionsBrowser->setHtml(prk_ins);
+            break;
+    }
+    case 4:{
+        ui->instructionsBrowser->setHtml(update_ins);
+        break;
+    }
+    default:{
+            ui->instructionsBrowser->setHtml(general_ins);
+            break;
+
+    }
+    }
+}
+
+void MainWindow::changeSizeEvent(){ //show irrational numbers on welcome screen
+    int rando=QRandomGenerator::global()->bounded(200);
+    QString chosenIrrational;
+    if(!(rando%3)){chosenIrrational=piTo1000;}else if((rando%3)==1){chosenIrrational=eTo330;}else{chosenIrrational=sqrt2ToN;}
+    int counter=320;
+    QString pre, arg, post(R"(</span>)");
+    signal=0;signal++;
+    running++;
+    ui->textBrowserX->setToolTip("Welche irrationale Zahl ist das?");
+    while(counter&&signal&&running){
+            pre = QString(R"(<span style="font-size: 86px; font-family: Broadway; color: rgb(%1, %2, %3);">)").arg(QRandomGenerator::global()->bounded(255)).arg(QRandomGenerator::global()->bounded(255)).arg(QRandomGenerator::global()->bounded(255));
+            arg.push_back(QString("%1%2%3").arg(pre).arg(chosenIrrational.at(320-counter)).arg(post));
+            ui->textBrowserX->setHtml(arg);
+            delay(360);
+            counter--;
+    }
+    ui->textBrowserX->setToolTip(";)");
+    running=0;
+}
+
+void MainWindow::firstWelcome(){
+    QString space;
+    QString space2;
+    for(int i=0;i<59;i++){
+                space.append("&nbsp;");
+        if(i<16)space2.append("&nbsp;");
+    }
+    ui->textBrowserX->setHtml(QString(R"(<br><br><br><br><br><br>%1<span style="font-size: 100px;font-family: Agency FB;"> Willkommen zum </span>)").arg(space));
+    delay(1441);
+    for(int i=20;i<=255;i=i+5){
+                ui->textBrowserX->setHtml("<br>"+QString(R"(%2<span style="font-size: 200px; color:rgb(%1, %1, %1); font-family: Agency FB;">🂠 </span>)").arg(i).arg(space2)+QString(R"(<span style="font-size: 150px; color:rgb(%1, %1, %1); font-family: Agency FB;">Binomialrechner</span>)").arg(i));
+        delay(42);
+    }
+}
+
+void MainWindow::welcomeDisplay(){
+    /*
+        int i=25;
+        signal++;
+        while(i&&signal){
+
+            ui->textBrowserX->setHtml(welcome1);
+            delay(3000);
+            ui->textBrowserX->setHtml(welcome2);
+            delay(3000);
+            i--;
+        }
+*/
+    QString space;
+    for(int i=0;i<16;i++){
+            space.append("&nbsp;");
+
+    }
+    QString dices="⚀⚁⚂⚃⚄⚅";
+    QString cards[]={"🂠","🂡","🂢","🂣","🂤","🂥","🂦","🂧","🂨","🂩","🂪","🂫","🂬","🂭","🂮","🂿"};
+    QString moonphases[]={"🌕","🌖","🌗","🌘","🌑","🌒","🌓","🌔"};
+    int i=0,j=0;
+    signal=0;signal++;
+    welcomeRunning++;
+    while(signal&&i!=300){
+            //ui->textBrowserX->setFont(QFont("Agency FB",130));
+            //ui->textBrowserX->setHtml("&nbsp;&nbsp;&nbsp;"+cards[j]+QString(R"(<span style="font-size: 150px;"> Binomialrechner</span>)"));
+            ui->textBrowserX->setHtml("<br>"+QString(R"(%2<span style="font-size: 200px; font-family: Agency FB;">%1 </span>)").arg(cards[j]).arg(space)+QString(R"(<span style="font-size: 150px; font-family: Agency FB;">Binomialrechner</span>)"));
+            delay(1800);
+            i++;j++;
+            if(j==16)j=0;
+    }
+    welcomeRunning=0;
 
 }
+
+void MainWindow::luckyLoki(){
+    QString lucky="I'm feeling lucky!😂";
+    ui->textBrowserX->setHtml(QString(R"(&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size: 120px; font-family: Mistral; color: rgb(255,255,255);">%2</span>)").arg(lucky));
+
+    /*
+    int i=32,rando;
+    QFontDatabase f;
+    QStringList fonts=f.families();
+
+    while(i){
+        rando=QRandomGenerator::global()->bounded(370);
+        ui->textBrowserX->setHtml(QString(R"(<span style="font-size: 120px; font-family: %1; color: rgb(255,255,255);">%2</span>)").arg(fonts.at(rando)).arg(lucky));
+        delay(2024);
+        i--;
+    }
 */
+}
+
+////// ----------end of block--------------
