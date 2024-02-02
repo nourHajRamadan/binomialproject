@@ -186,7 +186,7 @@ private:
  * optimize prk cdf code to run pdf once <<v2.0.4>>
  * fix n and p interval bug in prk <<v2.0.4>>
  * fix all monitor specific settings <<v2.0.4>>
- * ask leon for windows installer
+ * windows installer
    >Nullsoft Scriptable Install System (NSIS)
    >InstallSimple
  * settings tab (merge into instructions)
