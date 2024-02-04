@@ -15,6 +15,8 @@
 #include <QRandomGenerator>
 
 #include <QApplication>
+#include <QGridLayout>
+#include <QDockWidget>
 
 #include <QtWidgets/QMainWindow>
 #include <QtCharts/QChartView>
@@ -180,12 +182,13 @@ private:
 #endif // MAINWINDOW_H
 
 
-/* <<<<<TO DO>>>>>   <<v2.0.4>> (5)
+/* <<<<<TO DO>>>>>   <<v2.0.4>> (3) <<v2.1.0>> (3)
  * better view after choosing coloumn for table <<v2.0.4>>
- * search function for table <<v2.0.4>>
- * optimize prk cdf code to run pdf once <<v2.0.4>>
  * fix n and p interval bug in prk <<v2.0.4>>
- * fix all monitor specific settings <<v2.0.4>>
+ * switch values in mu and sigma calculations <<v2.0.4>>
+ * fix all monitor specific settings <<v2.1.0>>
+ * tab for confidence intervals <<v2.1.0>>
+ * search function for table <<v2.1.0>>
  * windows installer
    >Nullsoft Scriptable Install System (NSIS)
    >InstallSimple
@@ -195,6 +198,7 @@ private:
    >control sizing, maximizing
    >
  * red markings on diagram (optional)
+ * create play button for Jazz Sakura (QAudioengine) (optional)
  * create binomial tutorials with twine (optional)
  * fix feelingLoki (optional)
  * improve n^k for negative k (optional)
@@ -204,3 +208,4 @@ private:
 */
 
 //windeployqt.exe .
+

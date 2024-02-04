@@ -70,6 +70,15 @@ double binomcdf(int n, double p, int k1, int k2){
     return res;
 }
 
+double efficient_binomcdf(int n, double p, int k1, int k2){
+    long double res=0;
+    if(k1>k2 or k2>n) return -1;
+    for(int i=k1;i<=k2;i++){
+        res+=binompdf(n,p,i);
+    }
+    return res;
+}
+
 int fromNandP(int n, double p, double& mu, double& sigma){
     if(n*p<0 or n*p>n or sqrt(n*p*(1-p))==NAN) return -1;
     mu=n*p;
@@ -249,11 +258,12 @@ public:
     int n=0,k=0,k1=0,k2=0;
     double p=0,pRes=0;
     int cmpstatus=0; //0 <==> ≥ ; 1 <==> ≤
+    int warnung=0;
     void resetprk(){
             n=p=k=k1=k2=pRes=0;
     }
     int nMissing(int cumulative){
-            if(n==-1 or p==-1 or k==-1 or k1==-1 or k2==-1 or pRes==-1) return -1;
+        if(n==-1 or p==-1 or k==-1 or k1==-1 or k2==-1 or pRes==-1) return -1;
             if(!cumulative){
                 for(int i=0;i<=10000;i++){
                     if(pRes>binompdf(i,p,i*p)) return -1;
@@ -262,7 +272,14 @@ public:
                     }
                 }
             }else{
-                for(int i=0;i<=5000;i++){
+                if(k2==1010101010&&pRes>0){//for input "n"
+                    for(int i=k1;i<=5000;i++){
+                        if(binomcdf(i,p,k1,i)>=pRes){
+                            return n=cmpstatus?(i==k2?i:i-1):i;
+                        }
+                    }
+                }
+                for(int i=k1;i<=5000;i++){
                     if(binomcdf(i,p,k1,k2)>=pRes){
                         return n=cmpstatus?(i==k2?i:i-1):i;
                     }
@@ -317,7 +334,7 @@ public:
     int k1Missing(int cumulative){
             if(n==-1 or p==-1 or k==-1 or k1==-1 or k2==-1 or pRes==-1) return -1;
             if(cumulative){
-                for(int i=k2;i;i--){
+                for(int i=k2;i;i--){   
                 if(binomcdf(n,p,i,k2)>=pRes){
                     return k1=cmpstatus?(i==n?i:i+1):i;
                 }

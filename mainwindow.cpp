@@ -102,8 +102,8 @@ void MainWindow::on_tabWidget_tabCloseRequested(int index)
 
 void MainWindow::on_tabWidget_tabBarClicked(int index)
 {
-    ui->tabWidget->setCurrentIndex(0);
     if(!index&&!running){
+        ui->tabWidget->setCurrentIndex(0);
         signal=0;
         changeSizeEvent();
     }
@@ -161,10 +161,24 @@ void MainWindow::on_show_manuel_button_clicked()
 
 ////////  -------- <<<<< Standardrechner >>>>> -----------
 
-QString excuseGermanComma(QString arg){
+QString specialDoubleInput(QString arg){
     if(arg.contains(',')){
         arg.replace(',','.');
         return arg;
+    }else if(arg.contains('/')){//
+        int signal=0;
+        if(arg!=NULL && arg[arg.length()-1]==(char)32){
+            arg.remove(' ');
+            signal++;
+        }
+        QString a=arg.section('/',0,0);
+        QString b=arg.section('/',1,2);
+        double res=a.toDouble()/b.toDouble();
+        if(res>pow(2,30))res=0;
+        QString tmp=QString::number(res);
+        qDebug()<<res<<tmp;
+
+        return !signal?tmp:tmp+" ";
     }else{
         return arg;
     }
@@ -313,7 +327,7 @@ void MainWindow::on__n_edit_textChanged(const QString &arg1)
 
 void MainWindow::on__p_edit_textChanged(const QString &arg1)
 {
-    QString arg=excuseGermanComma(arg1);
+    QString arg=specialDoubleInput(arg1);
     if(arg!=NULL && arg[arg.length()-1]==(char)32 && setToParam==1){
         arg.remove(' ');
         ui->_p_edit->setText(arg);
@@ -355,7 +369,7 @@ void MainWindow::on_upperEdit_textChanged(const QString &arg1)
 
 void MainWindow::on__m_edit_textChanged(const QString &arg1)
 {
-    QString arg=excuseGermanComma(arg1);
+    QString arg=specialDoubleInput(arg1);
     if(arg!=NULL && arg[arg.length()-1]==(char)32 && setToParam==2){
         arg.remove(' ');
         ui->_m_edit->setText(arg);
@@ -368,7 +382,7 @@ void MainWindow::on__m_edit_textChanged(const QString &arg1)
 
 void MainWindow::on__sigma_edit_textChanged(const QString &arg1)
 {
-    QString arg=excuseGermanComma(arg1);
+    QString arg=specialDoubleInput(arg1);
     if(arg!=NULL && arg[arg.length()-1]==(char)32 && setToParam==2){
         arg.remove(' ');
         ui->_sigma_edit->setText(arg);
@@ -484,9 +498,11 @@ void MainWindow::on_showHisto_clicked()
     chartView->setRenderHint(QPainter::Antialiasing);
     chartView->adjustSize();
     chartView->chart()->setTheme(QChart::ChartThemeBrownSand);
+
     int c=ui->tabWidget->count();
     ui->tabWidget->insertTab(c,chartView,QString(">>Histo No.%1").arg(++histocount));
     ui->tabWidget->setCurrentIndex(c);
+
     if(hSt){
       if(n>150 && tipSt){
             mes.setWindowTitle("Tipp!");
@@ -1019,13 +1035,13 @@ void MainWindow::on_prk_n_edit_textEdited(const QString &arg1)
 
 void MainWindow::on_prk_p_edit_textEdited(const QString &arg1)
 {
-    QString arg=excuseGermanComma(arg1);
+    QString arg=specialDoubleInput(arg1);
     if(arg!=NULL && arg[arg.length()-1]==(char)32){
         arg.remove(' ');
         ui->prk_p_edit->setText(arg);
         prkCirculate(prk_circular_index,"p");
     }
-    prkObj->p=arg.toDouble()>=0?arg.toDouble():-1;
+    prkObj->p=arg.toDouble()>=0&&arg.toDouble()<1?arg.toDouble():-1;
     if(!prkObj->p && arg!="0") prk_cought_fire=1;
     prkOutput(prk_missing);
 }
@@ -1057,7 +1073,20 @@ void MainWindow::on_prk_k2_edit_textEdited(const QString &arg1)
         prkObj->k=arg.toInt()>=0?arg.toInt():-1;
         if(!prkObj->k && arg!="0") prk_cought_fire=1;
     }
+
+    QMessageBox mes;
+    mes.setWindowTitle("Warnung");
+    mes.setText("Für Eingaben von k1>2000 und/oder p<0.5 könnte die Rechnung erheblich verzögert werden und das Programm könnte eventuell abstürzen!");
+
     if(prk_cumulative){
+        if(arg[0]=='n'){
+            delay(2);
+            if(!prkObj->warnung)mes.exec();
+            prkObj->warnung++;
+            arg="1010101010";
+        }else{
+            prkObj->warnung=0;
+        }
         prkObj->k2=arg.toInt()>=0?arg.toInt():-1;
         if(!prkObj->k2 && arg!="0") prk_cought_fire=1;
     }
@@ -1067,13 +1096,13 @@ void MainWindow::on_prk_k2_edit_textEdited(const QString &arg1)
 
 void MainWindow::on_prk_target_probability_textEdited(const QString &arg1)
 {
-    QString arg=excuseGermanComma(arg1);
+    QString arg=specialDoubleInput(arg1);
     if(arg!=NULL && arg[arg.length()-1]==(char)32){
         arg.remove(' ');
         ui->prk_target_probability->setText(arg);
         prkCirculate(prk_circular_index,"er");
     }
-    prkObj->pRes=arg.toDouble()>0?arg.toDouble():-1;
+    prkObj->pRes=arg.toDouble()>0&&arg.toDouble()<1?arg.toDouble():-1;
     if(!prkObj->pRes && arg!="0") prk_cought_fire=1;
     prkOutput(prk_missing);
 }
@@ -1086,6 +1115,13 @@ void MainWindow::on_prk_2nd_compStatement_currentIndexChanged(int index)
 
 void MainWindow::on_prk_goToStd_clicked()
 {
+    if(prkObj->n==-1 or prkObj->p==-1 or prkObj->k==-1 or prkObj->k1==-1 or prkObj->k2==-1 or prkObj->pRes==-1){
+        QMessageBox mes;
+        mes.setWindowTitle("Warnung");
+        mes.setText("Ungültige Werte können nicht kopiert werden!");
+        mes.exec();
+        return;
+    }
     if(setToParam==2){
         ui->calWithParam->setCheckState(Qt::Unchecked);
         on_calWithParam_clicked(0);
@@ -1102,7 +1138,7 @@ void MainWindow::on_prk_goToStd_clicked()
         n=prkObj->n;    ui->_n_edit->setText(QString::number(n));
         p=prkObj->p;    ui->_p_edit->setText(QString::number(p));
         k1=prkObj->k1;   ui->underEdit->setText(QString::number(k1));
-        k2=prkObj->k2;   ui->upperEdit->setText(QString::number(k2));
+        k2=prkObj->k2==1010101010?prkObj->n:prkObj->k2;   ui->upperEdit->setText(QString::number(k2));
     }
     ui->tabWidget->setTabVisible(1,1);
     ui->tabWidget->setCurrentIndex(1);
