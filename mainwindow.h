@@ -16,12 +16,13 @@
 
 #include <QApplication>
 #include <QGridLayout>
-#include <QDockWidget>
+#include <QMdiArea>
 
 #include <QtWidgets/QMainWindow>
 #include <QtCharts/QChartView>
 #include <QtCharts/QBarSeries>
 #include <QBarSet>
+#include <QStackedBarSeries>
 #include <QtCharts/QLegend>
 #include <QtCharts/QBarCategoryAxis>
 #include <QtCharts/QHorizontalStackedBarSeries>
@@ -182,22 +183,21 @@ private:
 #endif // MAINWINDOW_H
 
 
-/* <<<<<TO DO>>>>>   <<v2.0.4>> (3) <<v2.1.0>> (3)
- * better view after choosing coloumn for table <<v2.0.4>>
- * fix n and p interval bug in prk <<v2.0.4>>
- * switch values in mu and sigma calculations <<v2.0.4>>
- * fix all monitor specific settings <<v2.1.0>>
- * tab for confidence intervals <<v2.1.0>>
- * search function for table <<v2.1.0>>
+/* <<<<<TO DO>>>>>   <<v2.1.0>> (5) <<v2.1.1>> (1)
+ * better view after choosing coloumn for table <<v2.1.0>>
+ * Update: add>>Histo red marking, overall check and update <<v2.1.0>>
+ * fix n and p interval bug in prk <<v2.1.0>>
+ * fix all monitor specific settings <<v2.1.1>>
+ * histo settings for confidence intervals <<v2.1.0>>
+ * search function for table <<v2.1.1>>
  * windows installer
    >Nullsoft Scriptable Install System (NSIS)
    >InstallSimple
  * settings tab (merge into instructions)
-   >change Histo theme
+   >change Histo theme, hide title
    >change target directory
    >control sizing, maximizing
    >
- * red markings on diagram (optional)
  * create play button for Jazz Sakura (QAudioengine) (optional)
  * create binomial tutorials with twine (optional)
  * fix feelingLoki (optional)

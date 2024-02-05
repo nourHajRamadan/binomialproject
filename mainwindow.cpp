@@ -186,15 +186,24 @@ QString specialDoubleInput(QString arg){
 
 void MainWindow::on_calWithParam_clicked(bool checked)
 {
-    ui->_n_edit->setText("");
-    ui->_p_edit->setText("");
-    ui->underEdit->setText("");
-    ui->upperEdit->setText("");
-    ui->_m_edit->setText("");
-    ui->_sigma_edit->setText("");
-    n=p=k1=k2=mu=sigma=0;
+    if(n>0&&p>0&&mu>0&&sigma>0){//assures proper display of parameter upon switch
+        ui->_n_edit->setText(QString::number(n));
+        ui->_p_edit->setText(QString::number(p));
+        ui->underEdit->setText(QString::number(k1));
+        ui->upperEdit->setText(QString::number(k2));
+        ui->_m_edit->setText(QString::number(mu));
+        ui->_sigma_edit->setText(QString::number(sigma));
+    }else{
+        n=p=k1=k2=mu=sigma=0;
+        ui->_n_edit->setText("");
+        ui->_p_edit->setText("");
+        ui->underEdit->setText("");
+        ui->upperEdit->setText("");
+        ui->_m_edit->setText("");
+        ui->_sigma_edit->setText("");
+    }
 
-    if (checked){//mit Mu und Sigma rechnen
+    if (checked){//mit Mu und Sigma rechnen >en>> calculate with mu and sigma
         ui->_n_label->hide();
         ui->_p_label->hide();
         ui->_n_edit->hide();
@@ -209,7 +218,7 @@ void MainWindow::on_calWithParam_clicked(bool checked)
 
         ui->_m_edit->setFocus();
 
-    }else{//mit N und P rechnen
+    }else{//mit N und P rechnen >en>> calculate with n and p
         ui->_n_label->show();
         ui->_p_label->show();
         ui->_n_edit->show();
@@ -237,6 +246,8 @@ void MainWindow::on_cumulativeP_clicked(bool checked)
         ui->underEdit->setPlaceholderText("k");
         setToCumulative=1;
         ui->underEdit->setFocus();
+        ui->upperEdit->setText("");
+        k2=0;
     }
     if(checked){//binomcdf
         ui->upperEdit->show();
@@ -305,7 +316,6 @@ void MainWindow::binomOutput(int j, int y){
 
 void MainWindow::sthsWrong(){
     ui->hiddenOutput->setText("Ungültige/unvollständige Eingabe!");
-    ui->pOutput->setText(" ");
     shitstorm=0;
     ui->pOutput->setText("");
 }
@@ -445,17 +455,43 @@ void MainWindow::on_showHisto_clicked()
         mes.exec();
         return;
     }
-    QString title=QString("Binomialverteilung für n=%1 p=%2\n(μ=%3  σ=%4)").arg(n).arg(p).arg(mu).arg(sigma);
-    QBarSet* disto = new QBarSet(title);
-
-    for (int i = 0; i <= n; ++i) {
-        disto->append(binompdf(n,p,i));
+    QString title;
+    QBarSet* distoOther = new QBarSet("o");
+    QBarSet* distoMain = new QBarSet("m");
+    QBarSet* distoNull = new QBarSet("n");
+    if(setToCumulative==2&&k1>=0&&k2>0&&k2>k1){//binomcdf
+        title=QString("Binomialverteilung für n=%1 p=%2\n(μ=%3  σ=%4)     Markierung für P(%5≤X≤%6)=%7").arg(n).arg(p).arg(mu).arg(sigma).arg(k1).arg(k2).arg(binomcdf(n,p,k1,k2));
+        for (int i = 0; i <= n; ++i) {
+            if(i<k1 or i>k2){distoOther->append(binompdf(n,p,i));}else{distoOther->append(0);}
+            if(i>=k1&&i<=k2){distoMain->append(binompdf(n,p,i));}else{distoMain->append(0);}
+            distoNull->append(0);
+        }
     }
-
-    QBarSeries *series = new QBarSeries();
+    if(setToCumulative==1&&k1>0){//binompdf
+        title=QString("Binomialverteilung für n=%1 p=%2\n(μ=%3  σ=%4)     Markierung für P(X=%5)=%6").arg(n).arg(p).arg(mu).arg(sigma).arg(k1).arg(binompdf(n,p,k1));
+        for (int i = 0; i <= n; ++i) {
+            if(i!=k1){distoOther->append(binompdf(n,p,i));}else{distoOther->append(0);}
+            if(i==k1){distoMain->append(binompdf(n,p,i));}else{distoMain->append(0);}
+            distoNull->append(0);
+        }
+    }
+    if(k1<=0&&k2<=0){//default
+        title=QString("Binomialverteilung für n=%1 p=%2\n(μ=%3  σ=%4)").arg(n).arg(p).arg(mu).arg(sigma);
+        for (int i = 0; i <= n; ++i) {
+            distoOther->append(0);
+            distoMain->append(0);
+            distoNull->append(binompdf(n,p,i));
+        }
+    }
+    QStackedBarSeries *series = new QStackedBarSeries();
     series->setBarWidth(1);
-    series->append(disto);
+    series->append(distoNull);//dark brown
+    series->append(distoOther);//bright brown
+    series->append(distoMain);//firey red
+
     QChart *chart = new QChart();
+    chart->setTitle(title);
+    chart->legend()->hide();
     chart->addSeries(series);
     if(histoAni){
         chart->setAnimationOptions(QChart::AllAnimations);
@@ -463,15 +499,6 @@ void MainWindow::on_showHisto_clicked()
         chart->setAnimationOptions(QChart::NoAnimation);
     }
 
-/*
-    auto axisX0 = new QBarCategoryAxis;
-    for(int i = 0; i <= n; ++i){
-        axisX0->append(QString::number(i));
-    }
-    chart->addAxis(axisX0, Qt::AlignBottom);
-
-    series->attachAxis(axisX0);
-*/
     auto axisX = new QValueAxis;
 
     if(n<1221){
@@ -492,7 +519,6 @@ void MainWindow::on_showHisto_clicked()
 
     chart->addAxis(axisY, Qt::AlignLeft);
     series->attachAxis(axisY);
-
 
     QChartView *chartView = new QChartView(chart);
     chartView->setRenderHint(QPainter::Antialiasing);
