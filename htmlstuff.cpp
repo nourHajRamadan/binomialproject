@@ -380,10 +380,11 @@ border-color:lightgray;
 )");
 
 //// Anweisungstexte
+QString currentVersion="2.1.0"; //version number must be kept under 4 digits due to the implementaion of the update function
 
-QString general_ins(R"(
+QString general_ins=QString(R"(
 <p><span style="font-family: Georgia, serif; font-size: 72px; background-color: rgb(44, 130, 201);"><strong><span style="text-shadow: rgba(136, 136, 136, 0.7) -1px 3px 3px;">Herzlich Willkommen zum Binomialrechner!</span></strong></span></p>
-<p><span style="text-shadow: rgba(136, 136, 136, 0.7) -1px 3px 3px; font-family: Georgia, serif; font-size: 32px; background-color: rgb(84, 172, 210); color: rgb(255, 255, 255);">version 2.0.4</span></p>
+<p><span style="text-shadow: rgba(136, 136, 136, 0.7) -1px 3px 3px; font-family: Georgia, serif; font-size: 32px; background-color: rgb(84, 172, 210); color: rgb(255, 255, 255);">version %1</span></p>
 <p><span style="font-family: Georgia, serif; font-size: 26px;">&gt;&gt;Diese App wurde genau daf&uuml;r entwickelt, um die verschiedenen Rechnungen in der <strong>Binomialverteilung</strong> gem&auml;&szlig; <strong>des deutschen Abiturs</strong> abzudecken. Es fehlt blo&szlig; ein Tool zu Hypothesentests, trotzdem k&ouml;nnen alle daf&uuml;r notwendigen Rechnungen mit den anderen Tools erledigt werden.&nbsp;</span></p>
 <p><span style="font-family: Georgia, serif; font-size: 26px;">Dieser Rechner ist ziemlich <strong>m&auml;chtig</strong> im Vergleich zu Online-Tools oder auch dem Handheld-Taschenrechner, vor allem, weil es f&uuml;r <em>Windows&nbsp;</em> entwickelt wurde, aber auch dank vielen Optimierungen der Abl&auml;ufe und Maximierung der nutzbaren Intervalle.</span></p>
 <p><span style="font-size: 26px; font-family: Georgia, serif;">&gt;&gt;Sie finden zu jedem Tool unter dem Dropmenu oben entsprechende Anweisungen zur grundlegenden Nutzung sowie einige <span style="background-color: rgb(147, 101, 184);">Tipps und Tricks</span>.</span></p>
@@ -402,7 +403,7 @@ QString general_ins(R"(
 <p><br></p>
 <p><span style='font-size: 24px; font-family: "Courier New", courier;'>&nbsp;<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">x</a></span></p>
 <p><br></p>
-)");
+)").arg(currentVersion);
 
 QString stdCal_ins(R"(
 <p><span style="font-size: 60px; font-family: Georgia, serif; background-color: rgb(147, 101, 184);">Standardrechner</span></p>
@@ -459,8 +460,8 @@ QString prk_ins(R"(
 <p><span style="font-size: 26px;"><span style="font-family: Georgia, serif;"><span style="font-size: 26px;">&gt;&gt;Sie k&ouml;nnen Eingaben f&uuml;r <strong>p&nbsp;</strong>und die Zielwahrscheinlichkeit<strong>&nbsp;P</strong><span style="font-size: 26px;"><span style="font-size: 26px;"><strong>&nbsp;</strong>auch in <u>Bruchform</u> t&auml;tigen. Daf&uuml;r verwenden Sie als Bruchstrich den Schr&auml;gstrich <strong>&quot;/&quot;</strong>. Bei anschlie&szlig;ender Nutzung der&nbsp;</span><span style="color: rgb(84, 172, 210);font-size: 26px;">Leerzeichentaste</span><span style="font-size: 26px;">&nbsp;f&uuml;r Zirkulation wird die Eingabe in eine <u>Dezimalzahl</u> &uuml;berf&uuml;hrt.</span></span></span></span></span></p>
 <p><br></p>
 )");
-QString update_ins(R"(
-<p><span style="font-size: 60px; font-family: Georgia, serif; background-color: rgb(44, 130, 201);"><strong>Binomialrechner v2.0.4</strong></span></p>
+QString update_ins=QString(R"(
+<p><span style="font-size: 60px; font-family: Georgia, serif; background-color: rgb(44, 130, 201);"><strong>Binomialrechner v%1</strong></span></p>
 <p><span style="font-size: 26px; font-family: Georgia, serif;">Sie k&ouml;nnen die aktuellste Version des Binomialrechners &uuml;ber dem folgenden Link bekommen:&nbsp;</span><span style='font-size: 24px; font-family: "Courier New", courier;'><a href="https://rwth-aachen.sciebo.de/s/3xlkX0pkpaNCkDz">Hier klicken!</a></span></p>
 <p><br></p>
 <p><span style="font-size: 26px; font-family: Georgia, serif;"><em><strong>Es folgt eine Auflistung der neu dazugekommenen Features:</strong></em></span></p>
@@ -482,7 +483,8 @@ QString update_ins(R"(
 <p><br></p>
 <p><span style='font-size: 24px; font-family: "Courier New", courier;'>&nbsp;<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">x</a></span></p>
 <p><br></p>
-)");
+)").arg(currentVersion);
+
 /// math jokes
 QString mathjoke1(R"(
 <span style='font-family: "Courier New", courier; font-size: 60px; background-color: rgb(44, 130, 201);'>math joke #1</span>

@@ -373,10 +373,205 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </item>
         <item row="2" column="1">
          <layout class="QGridLayout" name="gridLayout_2">
-          <item row="3" column="1">
+          <item row="6" column="2">
+           <widget class="QCheckBox" name="calWithParam">
+            <property name="font">
+             <font>
+              <family>Agency FB</family>
+              <pointsize>16</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Mit Erwartungswert und Standardabweichung rechnen</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QPushButton" name="showHisto">
+            <property name="font">
+             <font>
+              <family>Agency FB</family>
+              <pointsize>20</pointsize>
+             </font>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="whatsThis">
+             <string/>
+            </property>
+            <property name="text">
+             <string>Histogramm zeigen</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="pOutput">
+            <property name="font">
+             <font>
+              <family>Agency FB</family>
+              <pointsize>27</pointsize>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Binomial</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="hiddenOutput">
+            <property name="font">
+             <font>
+              <family>Agency FB</family>
+              <pointsize>27</pointsize>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Rechner</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QCheckBox" name="cumulativeP">
+            <property name="font">
+             <font>
+              <family>Agency FB</family>
+              <pointsize>16</pointsize>
+              <italic>false</italic>
+             </font>
+            </property>
+            <property name="text">
+             <string>kumulierte Wahrscheinlichkeitsrechnung</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
            <layout class="QGridLayout" name="gridLayout_17">
             <item row="0" column="3">
-             <widget class="QCheckBox" name="tSt3">
+             <layout class="QGridLayout" name="gridLayout_18">
+              <item row="1" column="2">
+               <widget class="QCheckBox" name="tSt2">
+                <property name="font">
+                 <font>
+                  <family>Agency FB</family>
+                  <pointsize>16</pointsize>
+                 </font>
+                </property>
+                <property name="toolTip">
+                 <string>maximaler Wert n=50000</string>
+                </property>
+                <property name="text">
+                 <string>P(X≤k)</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QCheckBox" name="tSt3">
+                <property name="font">
+                 <font>
+                  <family>Agency FB</family>
+                  <pointsize>16</pointsize>
+                 </font>
+                </property>
+                <property name="toolTip">
+                 <string>maximaler Wert n=50000</string>
+                </property>
+                <property name="text">
+                 <string>P(X≥k)</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QCheckBox" name="tSt1">
+                <property name="font">
+                 <font>
+                  <family>Agency FB</family>
+                  <pointsize>16</pointsize>
+                 </font>
+                </property>
+                <property name="toolTip">
+                 <string>maximaler Wert n=10^5</string>
+                </property>
+                <property name="text">
+                 <string>P(X=k)</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="option_label">
+                <property name="font">
+                 <font>
+                  <family>Agency FB</family>
+                  <pointsize>16</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Optionen:</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="1" column="3">
+             <layout class="QGridLayout" name="gridLayout_20">
+              <item row="0" column="2">
+               <spacer name="horizontalSpacer_21">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="0" column="0">
+               <spacer name="horizontalSpacer_20">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="0" column="1">
+               <widget class="QCheckBox" name="saveCSV">
+                <property name="font">
+                 <font>
+                  <family>Agency FB</family>
+                  <pointsize>16</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>CSV Tabelle speichern</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item row="4" column="2">
+           <layout class="QGridLayout" name="gridLayout_19">
+            <item row="1" column="1">
+             <widget class="QCheckBox" name="std_show_histo_markings">
               <property name="font">
                <font>
                 <family>Agency FB</family>
@@ -384,18 +579,16 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </font>
               </property>
               <property name="toolTip">
-               <string>maximaler Wert n=50000</string>
+               <string>Dies erlaubt Markierungen auf dem Histogramm von dem Ereignis(-intervall)
+sowie beliebte Konfidenzintervalle aus dem Dropmenu rechts&gt;&gt;</string>
               </property>
               <property name="text">
-               <string>P(X≥k)</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
+               <string>Markierungen anzeigen</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="2">
-             <widget class="QCheckBox" name="tSt2">
+            <item row="1" column="3">
+             <widget class="QComboBox" name="std_choose_marked_interval">
               <property name="font">
                <font>
                 <family>Agency FB</family>
@@ -403,31 +596,42 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </font>
               </property>
               <property name="toolTip">
-               <string>maximaler Wert n=50000</string>
+               <string>Hier können Sie sich ein Konfidenzintervall aussuchen,
+welches im Histogramm markiert und angegeben wird.</string>
               </property>
-              <property name="text">
-               <string>P(X≤k)</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_6">
-              <property name="font">
-               <font>
-                <family>Agency FB</family>
-                <pointsize>16</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Optionen:</string>
+              <property name="placeholderText">
+               <string/>
               </property>
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QCheckBox" name="tSt1">
+             <widget class="QCheckBox" name="savePNG">
+              <property name="font">
+               <font>
+                <family>Agency FB</family>
+                <pointsize>16</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Bild vom Histogramm speichern</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <spacer name="horizontalSpacer_22">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="3">
+             <widget class="QPushButton" name="showPNGTarget">
               <property name="font">
                <font>
                 <family>Agency FB</family>
@@ -435,28 +639,26 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </font>
               </property>
               <property name="toolTip">
-               <string>maximaler Wert n=10^5</string>
+               <string>Öffnet den Ordner auf Ihrem Rechner, wo Histogrammbilder
+und Tabellendateien gespeichert werden.</string>
               </property>
               <property name="text">
-               <string>P(X=k)</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
+               <string>Zielordner öffnen</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="4">
-             <widget class="QCheckBox" name="saveCSV">
-              <property name="font">
-               <font>
-                <family>Agency FB</family>
-                <pointsize>16</pointsize>
-               </font>
+            <item row="0" column="2">
+             <spacer name="horizontalSpacer_23">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
               </property>
-              <property name="text">
-               <string>CSV Tabelle speichern</string>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
               </property>
-             </widget>
+             </spacer>
             </item>
            </layout>
           </item>
@@ -479,120 +681,20 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="QLabel" name="pOutput">
-            <property name="font">
-             <font>
-              <family>Agency FB</family>
-              <pointsize>27</pointsize>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Binomial</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="2">
-           <layout class="QGridLayout" name="gridLayout_19">
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_7">
-              <property name="font">
-               <font>
-                <family>Agency FB</family>
-                <pointsize>16</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Optionen:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QCheckBox" name="savePNG">
-              <property name="font">
-               <font>
-                <family>Agency FB</family>
-                <pointsize>16</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Bild vom Histogramm speichern</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="2">
-             <widget class="QPushButton" name="showPNGTarget">
-              <property name="font">
-               <font>
-                <family>Agency FB</family>
-                <pointsize>16</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Zielordner öffnen</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item row="2" column="2">
-           <widget class="QPushButton" name="showHisto">
-            <property name="font">
-             <font>
-              <family>Agency FB</family>
-              <pointsize>20</pointsize>
-             </font>
-            </property>
-            <property name="statusTip">
-             <string/>
-            </property>
-            <property name="whatsThis">
-             <string/>
-            </property>
-            <property name="text">
-             <string>Histogramm zeigen</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="1">
-           <widget class="QCheckBox" name="cumulativeP">
-            <property name="font">
-             <font>
-              <family>Agency FB</family>
-              <pointsize>16</pointsize>
-              <italic>false</italic>
-             </font>
-            </property>
-            <property name="text">
-             <string>kumulierte Wahrscheinlichkeitsrechnung</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QLabel" name="hiddenOutput">
-            <property name="font">
-             <font>
-              <family>Agency FB</family>
-              <pointsize>27</pointsize>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Rechner</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="2">
-           <widget class="QCheckBox" name="calWithParam">
+          <item row="5" column="1">
+           <widget class="QCheckBox" name="std_show_options">
             <property name="font">
              <font>
               <family>Agency FB</family>
               <pointsize>16</pointsize>
              </font>
             </property>
+            <property name="toolTip">
+             <string>Optionen zur lokalen Speicherung sowie Einstellungen
+der Tabellen und Histogramme anzeigen.</string>
+            </property>
             <property name="text">
-             <string>Mit Erwartungswert und Standardabweichung rechnen</string>
+             <string>Optionen anzeigen</string>
             </property>
            </widget>
           </item>

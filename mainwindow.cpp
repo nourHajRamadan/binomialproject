@@ -25,6 +25,16 @@ MainWindow::MainWindow(QWidget *parent)
     ui->underLabel->setText("Ereignis");
     ui->underEdit->setPlaceholderText("k");
 
+//Standard: Intervalloptionen und Optionensichtbarkeit
+    ui->std_choose_marked_interval->addItems({"Keine Intervallmarkierung","1σ-Intervall","2σ-Intervall","3σ-Intervall","90%-Intervall","95%-Intervall","99%-Intervall"});
+    ui->std_choose_marked_interval->hide();
+    ui->std_show_histo_markings->hide();
+    ui->showPNGTarget->hide();
+    ui->saveCSV->hide(); ui->savePNG->hide();
+    ui->tSt1->hide(); ui->tSt2->hide(); ui->tSt3->hide();
+    ui->option_label->hide();
+    ui->std_choose_marked_interval->setDisabled(1);
+
 //PRK Standard Settings
     ui->prk_targetParameter->addItems({"Stichprobenumfang n","Trefferquote p","Ereignis k"});
     ui->prk_2nd_compStatement->addItems({"≥","≤"});
@@ -77,12 +87,13 @@ MainWindow::~MainWindow()
 
 /////mainwindow.cpp overview:
 /// 1. tabWidget Signals
-/// 2. Standardrechner Block
-/// 3. show Histogramm Block
-/// 4. show Table Block
-/// 5. Wichtige Funktionen Block
-/// 6. Parameter Retrieval Kit Block
-/// 7. Lucky Block (other)
+/// 2. Organisatory Block
+/// 3. Standardrechner Block
+/// 4. show Histogramm Block
+/// 5. show Table Block
+/// 6. Wichtige Funktionen Block
+/// 7. Parameter Retrieval Kit Block
+/// 8. Lucky Block
 
 ///// ------ <<<<<tabWidget Signals>>>>> ------
 void MainWindow::on_tabWidget_tabCloseRequested(int index)
@@ -159,6 +170,113 @@ void MainWindow::on_show_manuel_button_clicked()
 
 ////-----------end of block-----------
 
+///// ------ <<<<<Organisatory Block>>>>> ------
+
+void MainWindow::resizeEvent(QResizeEvent* event){
+    currentSTDW=event->size().width();
+    currentSTDH=event->size().height();
+    qDebug()<<"width:"<<currentSTDW<<"\t";
+    qDebug()<<"height:"<<currentSTDH<<"\n";
+    if((currentSTDW==(sysXmax) or currentSTDH==(sysYmax-40))&&!running){
+        signal=0;
+        changeSizeEvent();
+    }
+}
+
+void MainWindow::on_instructionsTo_currentIndexChanged(int index)
+{
+    ui->instructionsBrowser->setOpenExternalLinks(1);
+    switch (index){
+    case 0:{
+        ui->instructionsBrowser->setHtml(general_ins);
+        break;
+    }
+    case 1:{
+        ui->instructionsBrowser->setHtml(stdCal_ins);
+        break;
+    }
+    case 2:{
+        ui->instructionsBrowser->setHtml(wf_ins);
+        break;
+    }
+    case 3:{
+        ui->instructionsBrowser->setHtml(prk_ins);
+        break;
+    }
+    case 4:{
+        ui->instructionsBrowser->setHtml(update_ins);
+        break;
+    }
+    default:{
+        ui->instructionsBrowser->setHtml(general_ins);
+        break;
+
+    }
+    }
+}
+
+QString zeug;
+void MainWindow::offerUpdate(){
+    int i=5;
+    while(updateinfo.length()<50&&i){
+        fetchUpdate();
+        delay(1000);
+        i--;
+    }
+
+    if(updateinfo.length()<50)return;
+    QString newst=updateinfo.chopped(updateinfo.length()-6);
+    newst.remove("v");
+    newst.remove(".");
+    currentVersion.remove(".");
+    if(newst.toInt()>currentVersion.toInt()){
+
+        QMessageBox mes;
+        QString feed=QString(R"(<p><span style="font-family: Veranda, serif; font-size: 20px;"><strong>Es gibt eine neue Version des Binomialrechners zum Download verf&uuml;gbar!</strong></span></p>
+            <p><span style="font-family: Veranda, serif; font-size: 20px;"><strong>&Uuml;bersicht der neuen Features:</strong></span></p>)");
+
+        mes.setWindowTitle("Binomialrechner aktualisieren");
+        mes.setFont(QFont("Courier New",12,1,0));
+        mes.setTextFormat(Qt::RichText);
+        mes.setText(feed);
+        mes.setInformativeText(updateinfo);
+
+        mes.addButton("Zur Downloadseite",QMessageBox::AcceptRole);
+        mes.addButton("Später",QMessageBox::RejectRole);
+
+        if(!mes.exec())QDesktopServices::openUrl(QUrl("https://rwth-aachen.sciebo.de/s/3xlkX0pkpaNCkDz"));
+    }
+}
+
+void MainWindow::fetchUpdate()
+{
+
+    QNetworkAccessManager* manager = new QNetworkAccessManager();
+
+    QNetworkReply* rep = manager->get(QNetworkRequest(QUrl("https://raw.githubusercontent.com/nourHajRamadan/binomialproject/main/update_log.html")));
+
+    QObject::connect(manager, &QNetworkAccessManager::finished, [](QNetworkReply* reply) {
+        if (reply->error())
+        {
+            qDebug() << "ERROR!";
+            qDebug() << reply->errorString();
+        }
+        else
+        {
+            auto data = reply->readAll();
+            zeug=data;
+        }
+    });
+
+    updateinfo=zeug;
+
+    QObject::connect(manager, &QNetworkAccessManager::finished, manager,&QNetworkAccessManager::deleteLater);
+    QObject::connect(manager, &QNetworkAccessManager::finished, rep, &QNetworkReply::deleteLater);
+
+}
+
+////-----------end of block-----------
+
 ////////  -------- <<<<< Standardrechner >>>>> -----------
 
 QString specialDoubleInput(QString arg){
@@ -181,6 +299,19 @@ QString specialDoubleInput(QString arg){
         return !signal?tmp:tmp+" ";
     }else{
         return arg;
+    }
+}
+
+void MainWindow::on_std_show_options_clicked(bool checked)
+{
+    if(checked){
+        ui->std_show_options->hide();
+        ui->std_choose_marked_interval->show();
+        ui->std_show_histo_markings->show();
+        ui->showPNGTarget->show();
+        ui->saveCSV->show(); ui->savePNG->show();
+        ui->tSt1->show(); ui->tSt2->show(); ui->tSt3->show();
+        ui->option_label->show();
     }
 }
 
@@ -446,21 +577,38 @@ void MainWindow::on_showPNGTarget_clicked()
     QDesktopServices::openUrl( QUrl::fromLocalFile(QString("%1/SitzungsID%2").arg(getDocPath()).arg(histo_png_rando)));
 }
 
+void MainWindow::on_std_show_histo_markings_clicked(bool checked)
+{
+    if(checked){
+        ui->std_choose_marked_interval->setDisabled(0);
+        histoMarkings++;
+    }else{
+        histoMarkings=0;
+        ui->std_choose_marked_interval->setDisabled(1);
+    }
+}
+
+void MainWindow::on_std_choose_marked_interval_currentIndexChanged(int index)
+{
+
+}
+
 void MainWindow::on_showHisto_clicked()
 {
     QMessageBox mes;
     mes.setWindowTitle("Warnung");
-    if(n==0 or p==0 or n>=30000 or p>=1){
-        mes.setText("Keine sinnvoll darstellbare Histogramme für n und p!\t");
+    mes.setText("Keine sinnvoll darstellbare Histogramme für n und p!\t");
+    if(n==0 or p==0 or n>=30000 or p>=1 or (setToCumulative==2&&k2<k1&&histoMarkings)){
         mes.exec();
         return;
     }
-    QString title;
+    QString title = QString("Binomialverteilung für n=%1 p=%2\n(μ=%3  σ=%4)").arg(n).arg(p).arg(mu).arg(sigma);
     QBarSet* distoOther = new QBarSet("o");
     QBarSet* distoMain = new QBarSet("m");
     QBarSet* distoNull = new QBarSet("n");
+    if(histoMarkings){
     if(setToCumulative==2&&k1>=0&&k2>0&&k2>k1){//binomcdf
-        title=QString("Binomialverteilung für n=%1 p=%2\n(μ=%3  σ=%4)     Markierung für P(%5≤X≤%6)=%7").arg(n).arg(p).arg(mu).arg(sigma).arg(k1).arg(k2).arg(binomcdf(n,p,k1,k2));
+        title+=QString("     Markierung für P(%1≤X≤%2)=%3").arg(k1).arg(k2).arg(binomcdf(n,p,k1,k2));
         for (int i = 0; i <= n; ++i) {
             if(i<k1 or i>k2){distoOther->append(binompdf(n,p,i));}else{distoOther->append(0);}
             if(i>=k1&&i<=k2){distoMain->append(binompdf(n,p,i));}else{distoMain->append(0);}
@@ -468,15 +616,15 @@ void MainWindow::on_showHisto_clicked()
         }
     }
     if(setToCumulative==1&&k1>0){//binompdf
-        title=QString("Binomialverteilung für n=%1 p=%2\n(μ=%3  σ=%4)     Markierung für P(X=%5)=%6").arg(n).arg(p).arg(mu).arg(sigma).arg(k1).arg(binompdf(n,p,k1));
+        title+=QString("     Markierung für P(X=%1)=%2").arg(k1).arg(binompdf(n,p,k1));
         for (int i = 0; i <= n; ++i) {
             if(i!=k1){distoOther->append(binompdf(n,p,i));}else{distoOther->append(0);}
             if(i==k1){distoMain->append(binompdf(n,p,i));}else{distoMain->append(0);}
             distoNull->append(0);
         }
     }
-    if(k1<=0&&k2<=0){//default
-        title=QString("Binomialverteilung für n=%1 p=%2\n(μ=%3  σ=%4)").arg(n).arg(p).arg(mu).arg(sigma);
+    }
+    if((k1<=0&&k2<=0) or !histoMarkings){//default
         for (int i = 0; i <= n; ++i) {
             distoOther->append(0);
             distoMain->append(0);
@@ -1225,7 +1373,7 @@ void MainWindow::prkOutput(int missing){//missing: n<=>1 p<=>2 k<=>3 k1<=>4 k2<=
 
 ////// ----------end of block--------------
 
-///// ------<<<<<Lucky Block>>>>>------- (other)
+///// ------<<<<<Lucky Block>>>>>-------
 
 void MainWindow::on_lucky_button_clicked()
 {
@@ -1291,48 +1439,7 @@ void MainWindow::on_lucky_button_clicked()
     }
 }
 
-void MainWindow::resizeEvent(QResizeEvent* event){
-    currentSTDW=event->size().width();
-    currentSTDH=event->size().height();
-    qDebug()<<"width:"<<currentSTDW<<"\t";
-    qDebug()<<"height:"<<currentSTDH<<"\n";
-    if((currentSTDW==(sysXmax) or currentSTDH==(sysYmax-40))&&!running){
-            signal=0;
-            changeSizeEvent();
-    }
-}
 
-void MainWindow::on_instructionsTo_currentIndexChanged(int index)
-{
-    ui->instructionsBrowser->setOpenExternalLinks(1);
-    switch (index){
-    case 0:{
-            ui->instructionsBrowser->setHtml(general_ins);
-            break;
-    }
-    case 1:{
-            ui->instructionsBrowser->setHtml(stdCal_ins);
-            break;
-    }
-    case 2:{
-            ui->instructionsBrowser->setHtml(wf_ins);
-            break;
-    }
-    case 3:{
-            ui->instructionsBrowser->setHtml(prk_ins);
-            break;
-    }
-    case 4:{
-        ui->instructionsBrowser->setHtml(update_ins);
-        break;
-    }
-    default:{
-            ui->instructionsBrowser->setHtml(general_ins);
-            break;
-
-    }
-    }
-}
 
 void MainWindow::changeSizeEvent(){ //show irrational numbers on welcome screen
     int rando=QRandomGenerator::global()->bounded(200);
@@ -1348,6 +1455,9 @@ void MainWindow::changeSizeEvent(){ //show irrational numbers on welcome screen
             arg.push_back(QString("%1%2%3").arg(pre).arg(chosenIrrational.at(320-counter)).arg(post));
             ui->textBrowserX->setHtml(arg);
             delay(360);
+            while(ui->tabWidget->currentIndex()!=0){
+                delay(500);
+            }
             counter--;
     }
     ui->textBrowserX->setToolTip(";)");
@@ -1398,6 +1508,9 @@ void MainWindow::welcomeDisplay(){
             //ui->textBrowserX->setHtml("&nbsp;&nbsp;&nbsp;"+cards[j]+QString(R"(<span style="font-size: 150px;"> Binomialrechner</span>)"));
             ui->textBrowserX->setHtml("<br>"+QString(R"(%2<span style="font-size: 200px; font-family: Agency FB;">%1 </span>)").arg(cards[j]).arg(space)+QString(R"(<span style="font-size: 150px; font-family: Agency FB;">Binomialrechner</span>)"));
             delay(1800);
+            while(ui->tabWidget->currentIndex()!=0){
+                delay(500);
+            }
             i++;j++;
             if(j==16)j=0;
     }
@@ -1424,3 +1537,4 @@ void MainWindow::luckyLoki(){
 }
 
 ////// ----------end of block--------------
+

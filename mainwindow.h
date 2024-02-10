@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QApplication>
 #include <QLocale>
 #include <QDebug>
 #include <QColor>
@@ -14,9 +15,12 @@
 #include <QTextBrowser>
 #include <QRandomGenerator>
 
-#include <QApplication>
-#include <QGridLayout>
-#include <QMdiArea>
+#include <QCoreApplication>
+#include <QFile>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QTextCodec>
+#include <QTimer>
 
 #include <QtWidgets/QMainWindow>
 #include <QtCharts/QChartView>
@@ -39,7 +43,7 @@
 #include <QFontDatabase>
 
 #define STDW 1145 //Standard Window Size
-#define STDH 570
+#define STDH 606
 
 QT_CHARTS_USE_NAMESPACE
 QT_BEGIN_NAMESPACE
@@ -66,6 +70,7 @@ public:
     void resizeEvent(QResizeEvent* event);
     void changeSizeEvent();
     void luckyLoki();
+    void fetchUpdate(); void offerUpdate();
     int signal=0,running=0;//for changeSizeEvent
     int welcomeRunning=0;
     int sysXmax = GetSystemMetrics(SM_CXSCREEN);
@@ -152,9 +157,15 @@ private slots:
 
     void on_prk_goToStd_clicked();
 
+    void on_std_choose_marked_interval_currentIndexChanged(int index);
+
+    void on_std_show_options_clicked(bool checked);
+
+    void on_std_show_histo_markings_clicked(bool checked);
+
+
 private:
     Ui::MainWindow *ui;
-    QGraphicsScene grScene;
     int currentSTDW=STDW,currentSTDH=STDH;
     int easteregg=0;
     int firstsignal=0;
@@ -170,6 +181,7 @@ private:
     int hSt=0;   unsigned int tipSt=2;           //Histogramm saving status
     quint32 histo_png_rando=QRandomGenerator::global()->bounded(1000000,9999999);
     int histoAni=1;
+    int histoMarkings=0;
     QDateTime q=q.currentDateTime();
     QString sitzung = q.toString();
 
@@ -178,17 +190,19 @@ private:
     int prk_cought_fire=0;
     int prk_circular_index=0;
 
-
+    QString updateinfo;
 };
 #endif // MAINWINDOW_H
 
 
-/* <<<<<TO DO>>>>>   <<v2.1.0>> (5) <<v2.1.1>> (1)
+/* <<<<<TO DO>>>>>   <<v2.1.0>> (6) <<v2.1.1>> (2)
  * better view after choosing coloumn for table <<v2.1.0>>
  * Update: add>>Histo red marking, overall check and update <<v2.1.0>>
  * fix n and p interval bug in prk <<v2.1.0>>
- * fix all monitor specific settings <<v2.1.1>>
  * histo settings for confidence intervals <<v2.1.0>>
+ * set up a messagebox to communicate a special message with users <<v2.1.0>>
+ * random dice numbers for i'm feeling lucky <<v2.1.0>>
+ * fix all monitor specific settings <<v2.1.1>>
  * search function for table <<v2.1.1>>
  * windows installer
    >Nullsoft Scriptable Install System (NSIS)
@@ -197,13 +211,17 @@ private:
    >change Histo theme, hide title
    >change target directory
    >control sizing, maximizing
-   >
+   >search for updates, don't show updates while starting
+   >toggle language (when translation is available)
  * create play button for Jazz Sakura (QAudioengine) (optional)
  * create binomial tutorials with twine (optional)
  * fix feelingLoki (optional)
  * improve n^k for negative k (optional)
+ * cumulative histogram with connective line
  * build real npr (optional)
+ * make an english version OR refactor for any translation
  * make histogramm interactive with qbarset signals (optional)
+ *
  * >>>>> build wasm app
 */
 

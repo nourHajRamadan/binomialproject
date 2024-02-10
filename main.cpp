@@ -1,9 +1,5 @@
 #include "mainwindow.h"
 
-#include <QApplication>
-#include <QLocale>
-
-
 int main(int argc, char *argv[])
 {
 
@@ -15,6 +11,7 @@ int main(int argc, char *argv[])
     w.show();
 
     w.firstWelcome();
+    w.offerUpdate();
 
     return a.exec();
 

@@ -142,7 +142,11 @@ void wf_factorial(wf* obj){
         }
     }
     obj->overflow*=10;
-    getNice(obj);
+
+    while(obj->res>1000){
+        obj->res*=pow(10,-1);
+        obj->overflow++;
+    }
 }
 
 
