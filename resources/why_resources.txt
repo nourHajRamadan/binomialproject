@@ -1,0 +1,3 @@
+Hey!
+The network functionality of the binomialrechner, that is the display of an update and a special message in occussions, recuire two OPENSSL .dll files, which are included in this folder and should be pasted to the release or debug folder of your compiled project folder in order for the functions to work at all.
+Also there is the nice logo I have been using for the app.
