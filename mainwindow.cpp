@@ -215,16 +215,16 @@ void MainWindow::on_instructionsTo_currentIndexChanged(int index)
     }
 }
 
-QString zeug;
-void MainWindow::offerUpdate(){
+QString zeug,zeug2;
+int MainWindow::offerUpdate(){
     int i=5;
     while(updateinfo.length()<50&&i){
-        fetchUpdate();
+        fetchTextfeed(1,"https://raw.githubusercontent.com/nourHajRamadan/playground/main/up8426xhd2.html");
         delay(1000);
         i--;
     }
 
-    if(updateinfo.length()<50)return;
+    if(updateinfo.length()<50)return 0;
     QString newst=updateinfo.chopped(updateinfo.length()-6);
     newst.remove("v");
     newst.remove(".");
@@ -243,17 +243,39 @@ void MainWindow::offerUpdate(){
 
         mes.addButton("Zur Downloadseite",QMessageBox::AcceptRole);
         mes.addButton("Später",QMessageBox::RejectRole);
-
-        if(!mes.exec())QDesktopServices::openUrl(QUrl("https://rwth-aachen.sciebo.de/s/3xlkX0pkpaNCkDz"));
+        mes.addButton("Nicht mehr anzeigen",QMessageBox::ApplyRole);//->3
+        int tmp=mes.exec();
+        if(!tmp)QDesktopServices::openUrl(QUrl("https://rwth-aachen.sciebo.de/s/3xlkX0pkpaNCkDz"));
+        if(tmp==3)qDebug()<<"3!";//nicht mehr anzeigen
     }
+    return 0;
 }
 
-void MainWindow::fetchUpdate()
-{
+void MainWindow::showSpecialmessage(){
+    int i=5;
+    while(specialmessage.length()<7&&i){
+        fetchTextfeed(2,"https://raw.githubusercontent.com/nourHajRamadan/playground/main/sm94rud334.html");
+        delay(1000);
+        i--;
+    }
 
+    if(specialmessage.length()<7)return;
+    if(specialmessage.at(0)==0)return;
+    QString feed=specialmessage.remove(0,2);
+    QMessageBox mes;
+
+    mes.setWindowTitle("Binomialrechner NEWS");
+    mes.setTextFormat(Qt::RichText);
+    mes.setText(feed);
+    mes.exec();
+}
+int idextern;
+void MainWindow::fetchTextfeed(int id, QString s)
+{
+    idextern=id;
     QNetworkAccessManager* manager = new QNetworkAccessManager();
 
-    QNetworkReply* rep = manager->get(QNetworkRequest(QUrl("https://raw.githubusercontent.com/nourHajRamadan/binomialproject/main/update_log.html")));
+    QNetworkReply* rep = manager->get(QNetworkRequest(QUrl(s)));
 
     QObject::connect(manager, &QNetworkAccessManager::finished, [](QNetworkReply* reply) {
         if (reply->error())
@@ -264,11 +286,14 @@ void MainWindow::fetchUpdate()
         else
         {
             auto data = reply->readAll();
+            if(idextern==1)zeug=data;
+            if(idextern==2)zeug2=data;
             zeug=data;
         }
     });
 
-    updateinfo=zeug;
+    if(id==1)updateinfo=zeug;
+    if(id==2)specialmessage=zeug2;
 
     QObject::connect(manager, &QNetworkAccessManager::finished, manager,&QNetworkAccessManager::deleteLater);
     QObject::connect(manager, &QNetworkAccessManager::finished, rep, &QNetworkReply::deleteLater);
@@ -727,8 +752,15 @@ void MainWindow::on_showTable_clicked()
         mes.exec();
     }
 
-    auto tableWidget = new QTableWidget(n+1, 5, this);
-    QStringList nullist,col0,col1,col2,col3,col4,headers={"k","P(X=k)","P(X≤k)","P(X≥k)","Eckdaten"};
+    //auto tableWidget = new QTableWidget(n+1, 5, this);
+    QStringList nullist,col0,col1,col2,col3,col4,headers;
+    int cntr=1;
+    headers.append("k");
+    if(tSt1){ headers.append("P(X=k)");  cntr++;}
+    if(tSt2){ headers.append("P(X≤k)");  cntr++;}
+    if(tSt3){ headers.append("P(X≥k)");  cntr++;}
+    headers.append("Eckdaten"); cntr++;
+    auto tableWidget = new QTableWidget(n+1, cntr, this);
     tableWidget->setHorizontalHeaderLabels(headers);
     QFont sansFont("Helvetica [Cronyx]", 11);
     for (int i=0; i<=n; ++i) {//numerating and setting up
@@ -745,81 +777,85 @@ void MainWindow::on_showTable_clicked()
     int lower=round(mu-5*sigma);
     int higher=round(mu+5*sigma);
 
+    int startstuffing=1;
     if(tSt1){
     for (int i=0; i<=n; ++i) {//binompdf col1
         if(i<lower or i>higher){
-            tableWidget->setItem(i, 1, new QTableWidgetItem(tr(" %1 ").arg(QString::number(0))));
+            tableWidget->setItem(i, startstuffing, new QTableWidgetItem(tr(" %1 ").arg(QString::number(0))));
             if(tSSt)col1.append(QString::number(0));
-            tableWidget->item(i,1)->setFont(sansFont);
+            tableWidget->item(i,startstuffing)->setFont(sansFont);
             continue;
         }
         QString tmp = QString::number(pdfStdArray[i],'f',5);
         if(tmp=="0.00000") tmp=QString::number(0);
-        tableWidget->setItem(i, 1, new QTableWidgetItem(tr(" %1 ").arg(tmp)));
+        tableWidget->setItem(i, startstuffing, new QTableWidgetItem(tr(" %1 ").arg(tmp)));
         if(tSSt)col1.append(tr("%1").arg(tmp));
-        tableWidget->item(i,1)->setFont(sansFont);
+        tableWidget->item(i,startstuffing)->setFont(sansFont);
     }
+    startstuffing++;
     }
     if(tSt2){
     long double sum=0;
     for (int i=0; i<=n; ++i) {//binomcdf(0,k) col2
         sum+=pdfStdArray[i];
         if(i<lower){
-            tableWidget->setItem(i, 2, new QTableWidgetItem(tr(" %1 ").arg(0)));
+            tableWidget->setItem(i, startstuffing, new QTableWidgetItem(tr(" %1 ").arg(0)));
             if(tSSt)col2.append(QString::number(0));
-            tableWidget->item(i,2)->setFont(sansFont);
+            tableWidget->item(i,startstuffing)->setFont(sansFont);
             continue;
         }
         if(i>higher){
-            tableWidget->setItem(i, 2, new QTableWidgetItem(tr(" %1 ").arg(1)));
+            tableWidget->setItem(i, startstuffing, new QTableWidgetItem(tr(" %1 ").arg(1)));
             if(tSSt)col2.append(QString::number(1));
-            tableWidget->item(i,2)->setFont(sansFont);
+            tableWidget->item(i,startstuffing)->setFont(sansFont);
             continue;
         }
         QString tmp = QString::number(sum,'f',5);
         if(tmp=="0.00000") tmp=QString::number(0);
         if(tmp=="1.00000") tmp=QString::number(1);
-        tableWidget->setItem(i, 2, new QTableWidgetItem(tr(" %1 ").arg(tmp)));
+        tableWidget->setItem(i, startstuffing, new QTableWidgetItem(tr(" %1 ").arg(tmp)));
         if(tSSt)col2.append(tr("%1").arg(tmp));
-        tableWidget->item(i,2)->setFont(sansFont);
+        tableWidget->item(i,startstuffing)->setFont(sansFont);
     }
+    startstuffing++;
     }
     if(tSt3){
     long double sum=1;
     for (int i=0; i<=n; ++i) {//binomcdf(k,n) col3
         if(!i){sum=1;}else{sum-=pdfStdArray[i-1];}
         if(i<round(lower)){
-            tableWidget->setItem(i, 3, new QTableWidgetItem(tr(" %1 ").arg(1)));
+            tableWidget->setItem(i, startstuffing, new QTableWidgetItem(tr(" %1 ").arg(1)));
             if(tSSt)col3.append(QString::number(1));
-            tableWidget->item(i,3)->setFont(sansFont);
+            tableWidget->item(i,startstuffing)->setFont(sansFont);
             continue;
         }
         if(i>round(higher)){
-            tableWidget->setItem(i, 3, new QTableWidgetItem(tr(" %1 ").arg(0)));
+            tableWidget->setItem(i, startstuffing, new QTableWidgetItem(tr(" %1 ").arg(0)));
             if(tSSt)col3.append(QString::number(0));
-            tableWidget->item(i,3)->setFont(sansFont);
+            tableWidget->item(i,startstuffing)->setFont(sansFont);
             continue;
         }
         QString tmp = QString::number(sum,'f',5);
         if(tmp=="0.00000") tmp=QString::number(0);
         if(tmp=="1.00000") tmp=QString::number(1);
-        tableWidget->setItem(i, 3, new QTableWidgetItem(tr(" %1 ").arg(tmp)));
+        tableWidget->setItem(i, startstuffing, new QTableWidgetItem(tr(" %1 ").arg(tmp)));
         if(tSSt)col3.append(tr("%1").arg(tmp));
-        tableWidget->item(i,3)->setFont(sansFont);
+        tableWidget->item(i,startstuffing)->setFont(sansFont);
     }
+    startstuffing++;
     }
 
     //eckdaten
-    tableWidget->setItem(0,4,new QTableWidgetItem(tr(" n=%1 ").arg(n)));
-    tableWidget->setItem(1,4,new QTableWidgetItem(tr(" p=%1 ").arg(p)));
-    tableWidget->setItem(2,4,new QTableWidgetItem(tr(" μ=%1 ").arg(mu)));
-    tableWidget->setItem(3,4,new QTableWidgetItem(tr(" σ=%1 ").arg(sigma)));
+    tableWidget->setItem(0,startstuffing,new QTableWidgetItem(tr(" n=%1 ").arg(n)));
+    tableWidget->setItem(1,startstuffing,new QTableWidgetItem(tr(" p=%1 ").arg(p)));
+    tableWidget->setItem(2,startstuffing,new QTableWidgetItem(tr(" μ=%1 ").arg(mu)));
+    tableWidget->setItem(3,startstuffing,new QTableWidgetItem(tr(" σ=%1 ").arg(sigma)));
     col4.append(tr(" n=%1 ").arg(n));
     col4.append(tr(" p=%1 ").arg(p));
     col4.append(tr(" μ=%1 ").arg(mu));
     col4.append(tr(" σ=%1 ").arg(sigma));
     for(int i=0;i<=3;i++){
-        tableWidget->item(i,4)->setFont(sansFont);
+        tableWidget->item(i,startstuffing)->setFont(sansFont);
     }
 
     int c=ui->tabWidget->count();
@@ -836,9 +872,19 @@ void MainWindow::on_showTable_clicked()
     QFile data(dir_name+".csv");
     if (data.open(QFile::WriteOnly | QIODevice::Append)){}
     QTextStream output(&data);
-    output <<"n"<< ";"<<"P(X=k)"<< ";"<<"P(X<=k)"<< ";"<<"P(X>=k)"<<";"<<"Eckdaten"<<'\n';
+    //output <<"n"<< ";"<<"P(X=k)"<< ";"<<"P(X<=k)"<< ";"<<"P(X>=k)"<<";"<<"Eckdaten"<<'\n';
+    output<<"n"<<";";
+    if(tSt1)output<<"P(X=k)"<< ";";
+    if(tSt2)output<<"P(X<=k)"<<";";
+    if(tSt3)output<<"P(X>=k)"<<";";
+    output<<"Eckdaten"<<'\n';
     for(int i=0;i<=n; i++) {
-        output  <<col0[i]<< ";" << (tSt1?col1[i]:"") <<";" << (tSt2?col2[i]:"") <<";" << (tSt3?col3[i]:"") <<";"<< (i<4?col4[i]:" ") << '\n';
+        //output  <<col0[i]<< ";" << (tSt1?col1[i]:"") <<";" << (tSt2?col2[i]:"") <<";" << (tSt3?col3[i]:"") <<";"<< (i<4?col4[i]:" ") << '\n';
+        output<<col0[i]<<";";
+        if(tSt1)output<<col1[i]<<";";
+        if(tSt2)output<<col2[i]<<";";
+        if(tSt3)output<<col3[i]<<";";
+        output<<(i<4?col4[i]:" ")<<'\n';
     }
 
     data.close();
@@ -1192,6 +1238,11 @@ void MainWindow::on_prk_cumulativeP_clicked(bool checked)
     }
 }
 
+void MainWindow::on_prk_show_other_limit_clicked(bool checked)
+{
+    if(checked){prk_show_other_limit++;}else{prk_show_other_limit=0;}
+    prkOutput(prk_missing);
+}
 
 void MainWindow::on_prk_n_edit_textEdited(const QString &arg1)
 {
@@ -1317,24 +1368,30 @@ void MainWindow::on_prk_goToStd_clicked()
     ui->tabWidget->setTabVisible(1,1);
     ui->tabWidget->setCurrentIndex(1);
 }
-
+QString formatOtherLimit(int cumulative, char missing, double firstLimit, int prk_show_other_limit){
+    double res=prkObj->getOtherLimit(cumulative,missing,firstLimit);
+    if(res==-1 or res<firstLimit or !prk_show_other_limit) return "";
+    return QString("%1≥").arg(res);
+}
 void MainWindow::prkOutput(int missing){//missing: n<=>1 p<=>2 k<=>3 k1<=>4 k2<=>5
     switch (missing){
         case 1:{
             if(prkObj->p==0){ ui->prk_n_out->setText("n=? (Ungültige Eingabe)"); break;}
             int tmp=prkObj->nMissing(prk_cumulative);
+            QString tmp2=formatOtherLimit(prk_cumulative,'n',tmp,prk_show_other_limit);
             QString cmp=prkObj->cmpstatus?"≤":"≥";
             if(prk_cought_fire)tmp=-1;
             qDebug()<<"ntmp:"<<tmp;
-            if(tmp!=-1){ui->prk_n_out->setText(QString("n%1%2").arg(cmp).arg(tmp));}else{ui->prk_n_out->setText("n=? (Ungültige Eingabe)");prk_cought_fire++;}
+            if(tmp!=-1){ui->prk_n_out->setText(QString("%3n%1%2").arg(cmp).arg(tmp).arg(tmp2));}else{ui->prk_n_out->setText("n=? (Ungültige Eingabe)");prk_cought_fire++;}
             break;
         }//"≥","≤"
         case 2:{
             double tmp=prkObj->pMissing(prk_cumulative);
+            QString tmp2=formatOtherLimit(prk_cumulative,'p',tmp,prk_show_other_limit);
             QString cmp=prkObj->cmpstatus?(prk_cumulative?(prkObj->k1?"≤":"≥"):(prkObj->k?"≤":"≥")):(prk_cumulative?(prkObj->k1?"≥":"≤"):(prkObj->k?"≥":"≤"));
             if(prk_cought_fire)tmp=-1;
             qDebug()<<"ptmp:"<<tmp;
-            if(tmp!=-1){ui->prk_p_out->setText(QString("p%1%2").arg(cmp).arg(tmp));}else{ui->prk_p_out->setText("p=? (Ungültige Eingabe)");prk_cought_fire++;}
+            if(tmp!=-1){ui->prk_p_out->setText(QString("%3p%1%2").arg(cmp).arg(tmp).arg(tmp2));}else{ui->prk_p_out->setText("p=? (Ungültige Eingabe)");prk_cought_fire++;}
             break;
         }
         case 3:{
@@ -1537,4 +1594,7 @@ void MainWindow::luckyLoki(){
 }
 
 ////// ----------end of block--------------
+
+
+
 

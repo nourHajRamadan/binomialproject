@@ -266,6 +266,47 @@ public:
     void resetprk(){
             n=p=k=k1=k2=pRes=0;
     }
+    double getOtherLimit(int cumulative, char missing, double firstLimit){
+        if(!cmpstatus&&firstLimit!=-1){
+            switch(missing){
+            case 'n':
+            {
+                if(!cumulative){
+                    for(int i=firstLimit;i<=10000;i++){
+                        if(binompdf(i,p,k)<=pRes){
+                            return i-1;
+                        }
+                    }
+                }else{
+                    for(int i=firstLimit;i<=5000;i++){
+                        if(binomcdf(i,p,k1,k2)<=pRes){
+                            return i-1;
+                        }
+                    }
+                }
+                break;
+            }
+            case 'p':
+            {
+                if(!cumulative){
+                    for(int i=firstLimit*10000;i<=10000;i++){
+                        if(binompdf(n,i*0.0001,k)<=pRes){
+                            return (i-1)*0.0001;
+                        }
+                    }
+                }else{
+                    for(int i=firstLimit*10000;i<=10000;i++){
+                        if(binomcdf(n,i*0.0001,k1,k2)<=pRes){
+                            return (i-1)*0.0001;
+                        }
+                    }
+                }
+                break;
+            }
+            }
+        }
+        return -1;
+    }
     int nMissing(int cumulative){
         if(n==-1 or p==-1 or k==-1 or k1==-1 or k2==-1 or pRes==-1) return -1;
             if(!cumulative){

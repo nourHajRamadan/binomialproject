@@ -70,7 +70,7 @@ public:
     void resizeEvent(QResizeEvent* event);
     void changeSizeEvent();
     void luckyLoki();
-    void fetchUpdate(); void offerUpdate();
+    void fetchTextfeed(int id,QString s); int offerUpdate(); void showSpecialmessage();
     int signal=0,running=0;//for changeSizeEvent
     int welcomeRunning=0;
     int sysXmax = GetSystemMetrics(SM_CXSCREEN);
@@ -164,6 +164,8 @@ private slots:
     void on_std_show_histo_markings_clicked(bool checked);
 
 
+    void on_prk_show_other_limit_clicked(bool checked);
+
 private:
     Ui::MainWindow *ui;
     int currentSTDW=STDW,currentSTDH=STDH;
@@ -186,28 +188,29 @@ private:
     QString sitzung = q.toString();
 
     int prk_cumulative=0;
+    int prk_show_other_limit=1;
     int prk_missing=0;
     int prk_cought_fire=0;
     int prk_circular_index=0;
 
-    QString updateinfo;
+    QString updateinfo,specialmessage;
 };
 #endif // MAINWINDOW_H
 
 
-/* <<<<<TO DO>>>>>   <<v2.1.0>> (6) <<v2.1.1>> (2)
- * better view after choosing coloumn for table <<v2.1.0>>
+/* <<<<<TO DO>>>>>   <<v2.1.0>> (3) <<v2.1.1>> (3)
+ * better view after choosing coloumn for table <<v2.1.0>> DONE
  * Update: add>>Histo red marking, overall check and update <<v2.1.0>>
- * fix n and p interval bug in prk <<v2.1.0>>
+ * fix n and p interval bug in prk <<v2.1.0>> DONE
  * histo settings for confidence intervals <<v2.1.0>>
- * set up a messagebox to communicate a special message with users <<v2.1.0>>
- * random dice numbers for i'm feeling lucky <<v2.1.0>>
+ * debug messagebox to communicate a special message with users <<v2.1.0>> DONE
+ * random dice numbers for i'm feeling lucky <<v2.1.1>>
  * fix all monitor specific settings <<v2.1.1>>
  * search function for table <<v2.1.1>>
  * windows installer
    >Nullsoft Scriptable Install System (NSIS)
    >InstallSimple
- * settings tab (merge into instructions)
+ * settings tab (merge into instructions) <<v2.1.1>>
    >change Histo theme, hide title
    >change target directory
    >control sizing, maximizing

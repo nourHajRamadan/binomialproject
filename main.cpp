@@ -11,7 +11,8 @@ int main(int argc, char *argv[])
     w.show();
 
     w.firstWelcome();
-    w.offerUpdate();
+    while(w.offerUpdate()){}
+    //w.showSpecialmessage();
 
     return a.exec();
 

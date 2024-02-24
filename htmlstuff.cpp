@@ -380,7 +380,7 @@ border-color:lightgray;
 )");
 
 //// Anweisungstexte
-QString currentVersion="2.1.0"; //version number must be kept under 4 digits due to the implementaion of the update function
+QString currentVersion="2.0.0"; //version number must be kept under 4 digits due to the implementaion of the update function
 
 QString general_ins=QString(R"(
 <p><span style="font-family: Georgia, serif; font-size: 72px; background-color: rgb(44, 130, 201);"><strong><span style="text-shadow: rgba(136, 136, 136, 0.7) -1px 3px 3px;">Herzlich Willkommen zum Binomialrechner!</span></strong></span></p>
