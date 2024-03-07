@@ -46,7 +46,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>4</number>
       </property>
       <property name="tabsClosable">
        <bool>true</bool>
@@ -596,8 +596,11 @@ sowie beliebte Konfidenzintervalle aus dem Dropmenu rechts&gt;&gt;</string>
                </font>
               </property>
               <property name="toolTip">
-               <string>Hier können Sie sich ein Konfidenzintervall aussuchen,
-welches im Histogramm markiert und angegeben wird.</string>
+               <string>Hier können Sie sich ein Konfidenzintervall aussuchen, dessen Wahrscheinlichkeit
+hier und im Histogramm markiert und angegeben wird.</string>
+              </property>
+              <property name="editable">
+               <bool>false</bool>
               </property>
               <property name="placeholderText">
                <string/>
@@ -1471,6 +1474,16 @@ Sinnvoll wenn die Eingabe sehr groß sind, da diese zusätzliche Berechnung perf
        <layout class="QGridLayout" name="gridLayout_16">
         <item row="0" column="0">
          <layout class="QGridLayout" name="gridLayout_14">
+          <item row="0" column="2">
+           <widget class="QComboBox" name="instructionsTo">
+            <property name="font">
+             <font>
+              <family>Agency FB</family>
+              <pointsize>18</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
           <item row="0" column="0">
            <widget class="QLabel" name="label_5">
             <property name="font">
@@ -1485,12 +1498,15 @@ Sinnvoll wenn die Eingabe sehr groß sind, da diese zusätzliche Berechnung perf
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QComboBox" name="instructionsTo">
+           <widget class="QPushButton" name="jsonResetButton">
             <property name="font">
              <font>
               <family>Agency FB</family>
-              <pointsize>18</pointsize>
+              <pointsize>16</pointsize>
              </font>
+            </property>
+            <property name="text">
+             <string>Pop-Up Fenster aktivieren</string>
             </property>
            </widget>
           </item>

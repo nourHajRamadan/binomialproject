@@ -20,6 +20,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QTextCodec>
+#include <QTime>
 #include <QTimer>
 
 #include <QtWidgets/QMainWindow>
@@ -38,6 +39,8 @@
 #include <QPainter>
 #include <QDesktopServices>
 #include <QDir>
+#include <QtCore>
+#include <QIODevice>
 #include <QDateTime>
 #include <QKeyEvent>
 #include <QFontDatabase>
@@ -61,6 +64,7 @@ public:
 
     void binomOutput(int j, int y);
     void sthsWrong();
+    void getConfidence(int isSigma,double target);
     void wfOutput(int id);
     void prkOutput(int missing);
     void prkClearUp();
@@ -70,11 +74,13 @@ public:
     void resizeEvent(QResizeEvent* event);
     void changeSizeEvent();
     void luckyLoki();
-    void fetchTextfeed(int id,QString s); int offerUpdate(); void showSpecialmessage();
+    void fetchTextfeed(int id,QString s); int offerUpdate(); void showSpecialmessage(); void preparePopUps();
+    void getJsonVariables();
+    void setJsonVariables();
     int signal=0,running=0;//for changeSizeEvent
     int welcomeRunning=0;
-    int sysXmax = GetSystemMetrics(SM_CXSCREEN);
-    int sysYmax = GetSystemMetrics(SM_CYSCREEN);
+    int sysXmax =300; //GetSystemMetrics(SM_CXSCREEN);
+    int sysYmax =300; //GetSystemMetrics(SM_CYSCREEN);
 private slots:
 
     void on_calWithParam_clicked(bool checked);
@@ -166,26 +172,27 @@ private slots:
 
     void on_prk_show_other_limit_clicked(bool checked);
 
+    void on_jsonResetButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     int currentSTDW=STDW,currentSTDH=STDH;
     int easteregg=0;
     int firstsignal=0;
 
-    int n=0,k1=0,k2=0;
+    int n=0,k1=0,k2=0,c1=0,c2=0;
     double p=0,mu=0,sigma=0;
-    int setToCumulative=1;
-    int setToParam=1;
+    int setToCumulative=1; //1-->logic 0, 2--> logic 1
+    int setToParam=1; //1-->logic 0, 2--> logic 1
     int shitstorm=0;
 
     int histocount=0, tablecount=0;
     int tSt1=1; int tSt2=1; int tSt3=1; int tSSt=0; //Table showing and saving status
-    int hSt=0;   unsigned int tipSt=2;           //Histogramm saving status
-    quint32 histo_png_rando=QRandomGenerator::global()->bounded(1000000,9999999);
+    int hSt=0;   unsigned int tipSt=1;           //Histogramm saving status
     int histoAni=1;
     int histoMarkings=0;
-    QDateTime q=q.currentDateTime();
-    QString sitzung = q.toString();
+    int markIndex=0;
+    QString sessionDocname;
 
     int prk_cumulative=0;
     int prk_show_other_limit=1;
@@ -194,38 +201,43 @@ private:
     int prk_circular_index=0;
 
     QString updateinfo,specialmessage;
+    int jsonHideUpdates=0,jsonHideSpecialmessages=0;
 };
 #endif // MAINWINDOW_H
 
 
-/* <<<<<TO DO>>>>>   <<v2.1.0>> (3) <<v2.1.1>> (3)
- * better view after choosing coloumn for table <<v2.1.0>> DONE
- * Update: add>>Histo red marking, overall check and update <<v2.1.0>>
- * fix n and p interval bug in prk <<v2.1.0>> DONE
- * histo settings for confidence intervals <<v2.1.0>>
- * debug messagebox to communicate a special message with users <<v2.1.0>> DONE
- * random dice numbers for i'm feeling lucky <<v2.1.1>>
- * fix all monitor specific settings <<v2.1.1>>
- * search function for table <<v2.1.1>>
- * windows installer
+/* <<<<<TO DO>>>>>   <<v2.2.0>> (9)
+ * random dice numbers for i'm feeling lucky <<v2.2.0>>
+ * fix all monitor specific settings <<v2.2.0>>
+ * search function for table <<v2.2.0>>
+ * cumulative histogram with connective line <<v2.2.0>>
+ * make entieres of other probabilities for confidence interval possible <<v2.2.0>>
+ * save results to calculate with other results <<v2.2.0>>
+ * fix setToCumu and setToParam logic from 1 and 2 TO 0 and 1 <<v2.2.0>>
+ * windows installer <<v2.2.0>>
    >Nullsoft Scriptable Install System (NSIS)
    >InstallSimple
- * settings tab (merge into instructions) <<v2.1.1>>
-   >change Histo theme, hide title
-   >change target directory
-   >control sizing, maximizing
-   >search for updates, don't show updates while starting
-   >toggle language (when translation is available)
+   >Innosetup
+   >make own installer
+ * settings tab (merge into instructions) <<v2.2.0>>
+   std>change Histo theme, hide title
+   std>change target directory
+   prk>hide otherlimit
+   gen>control sizing, maximizing
+   gen>change highight color from azure to hex
+   gen>search for updates, don't show updates/specialmessages while starting
+   gen>toggle language (when translation is available)
+ *
+ * multithreading
  * create play button for Jazz Sakura (QAudioengine) (optional)
  * create binomial tutorials with twine (optional)
  * fix feelingLoki (optional)
  * improve n^k for negative k (optional)
- * cumulative histogram with connective line
  * build real npr (optional)
  * make an english version OR refactor for any translation
  * make histogramm interactive with qbarset signals (optional)
  *
- * >>>>> build wasm app
+ * >>>>> build wasm app (in progress)
 */
 
 //windeployqt.exe .

@@ -1,10 +1,4 @@
 #include <cmath>
-#include <QTextBrowser>
-#include <iostream>
-#include <sstream>
-#include <QTime>
-#include <QTimer>
-#include <QCoreApplication>
 
 int overcount=0;//how many times the first loop exceeds e+100
 int* ptr= &overcount;
@@ -91,6 +85,19 @@ int fromMuandSigma(double mu, double sigma, int& n, double& p){
     p=1-((sigma*sigma)/mu);
     n=lround(mu/p);
     return 0;
+}
+
+int intervalAroundMu(int n, double p, double target, int& k1, int& k2){
+    double mu=n*p;
+    for(int i=0;i<=(n/2);i++){
+        double tmp=binomcdf(n,p,mu-i,mu+i);
+        if(tmp>=target){
+            k1=mu-i;
+            k2=mu+i;
+            return 0;
+        }
+    }
+    return -1;
 }
 
 /////   ----- Code for WF -----
@@ -402,33 +409,3 @@ public:
 
 PRK* prkObj = new PRK;
 
-/*
-void delay()
-{
-    QTime dieTime= QTime::currentTime().addSecs(3);
-    while (QTime::currentTime() < dieTime)
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-}
-*/
-inline void delay(int millisecondsWait)
-{
-    QEventLoop loop;
-    QTimer t;
-    t.connect(&t, &QTimer::timeout, &loop, &QEventLoop::quit);
-    t.start(millisecondsWait);
-    loop.exec();
-}
-/*
-void welcomeDisplay(QTextBrowser& x){
-    int i=25;
-    while(i){
-
-        x.setHtml(welcome1);
-        delay(3000);
-        x.setHtml(welcome2);
-        delay(3000);
-        i--;
-    }
-
-}
-*/

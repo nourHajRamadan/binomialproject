@@ -2,11 +2,21 @@
 #include "ui_mainwindow.h"
 #include "mathstuff.cpp"
 #include "htmlstuff.cpp"
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    qDebug()<<"Initiating Binomialrechner v"+currentVersion;
+
+    ui->jsonResetButton->hide();//tmp
+
+//Standard: name of this session's folder based on date and time
+    QDateTime q=q.currentDateTime();//OG "Mi Feb 28 01:14:55 2024"
+    QString sesh = q.toString();
+    //Sitzung am 28.Feb.2024 um 01.14Uhr
+    sessionDocname=QString("%1. %2. %3 um %4.%5Uhr").arg(sesh.section(32,2,2)).arg(sesh.section(32,1,1)).arg(sesh.section(32,4,4)).arg(QString(sesh.section(32,3,3)).section(':',0,0)).arg(QString(sesh.section(32,3,3)).section(':',1,1));
 
 //Standard: all tabs closed except for welcome
     for(int i=1;i<=4;i++){
@@ -26,21 +36,20 @@ MainWindow::MainWindow(QWidget *parent)
     ui->underEdit->setPlaceholderText("k");
 
 //Standard: Intervalloptionen und Optionensichtbarkeit
-    ui->std_choose_marked_interval->addItems({"Keine Intervallmarkierung","1σ-Intervall","2σ-Intervall","3σ-Intervall","90%-Intervall","95%-Intervall","99%-Intervall"});
+    ui->std_choose_marked_interval->addItems({"Konfidenzintervall aussuchen","1σ-Intervall","2σ-Intervall","3σ-Intervall","90%-Intervall","95%-Intervall","99%-Intervall"});
     ui->std_choose_marked_interval->hide();
     ui->std_show_histo_markings->hide();
     ui->showPNGTarget->hide();
     ui->saveCSV->hide(); ui->savePNG->hide();
     ui->tSt1->hide(); ui->tSt2->hide(); ui->tSt3->hide();
     ui->option_label->hide();
-    ui->std_choose_marked_interval->setDisabled(1);
 
 //PRK Standard Settings
     ui->prk_targetParameter->addItems({"Stichprobenumfang n","Trefferquote p","Ereignis k"});
     ui->prk_2nd_compStatement->addItems({"≥","≤"});
 
 //Instruction Tab Settings
-    ui->instructionsTo->addItems({"dem allgemeinen Umgang","dem Standardrechner","den wichtigen Funktionen","dem Parameter Retrieval Kit","Aktualisierung des Binomialrechners"});
+    ui->instructionsTo->addItems({"dem allgemeinen Umgang","dem Standardrechner","den wichtigen Funktionen","dem Parameter Retrieval Kit","Aktualisierung des Binomialrechners"});   
 
 //Palette Settings
     qApp->setStyle(QStyleFactory::create("Fusion"));
@@ -96,6 +105,16 @@ MainWindow::~MainWindow()
 /// 8. Lucky Block
 
 ///// ------ <<<<<tabWidget Signals>>>>> ------
+
+inline void delay(int millisecondsWait)
+{
+    QEventLoop loop;
+    QTimer t;
+    t.connect(&t, &QTimer::timeout, &loop, &QEventLoop::quit);
+    t.start(millisecondsWait);
+    loop.exec();
+}
+
 void MainWindow::on_tabWidget_tabCloseRequested(int index)
 {
     if(!index){
@@ -183,6 +202,89 @@ void MainWindow::resizeEvent(QResizeEvent* event){
     }
 }
 
+QString getDocPath(){
+    QString res, docdir(getenv("USERPROFILE"));
+    for(int i=0;i<docdir.length();i++){
+        if(docdir[i]==(char)92){
+            res.append('/');
+        }else{
+            res.append(docdir[i]);
+        }
+    }
+    res.append("/Documents/Binomialrechner");
+    return res;
+}
+
+void MainWindow::getJsonVariables(){
+
+    QString path=getDocPath();
+    path.append("/config");
+    QDir dir(path);
+    if (!dir.exists()) dir.mkpath(".");
+    QFile file(path+"/config.json");
+    if( file.open( QIODevice::ReadOnly ) ){
+        QByteArray bytes=file.readAll();
+        file.close();
+
+        QJsonParseError jsonError;
+        QJsonDocument document = QJsonDocument::fromJson( bytes, &jsonError );
+        if( jsonError.error != QJsonParseError::NoError )
+        {
+            qDebug()<<"fromJson failed: "<<jsonError.errorString();
+            return ;
+        }
+        if(document.isObject()){
+            QJsonObject jsonObj=document.object();
+            if(jsonObj.contains("hideUpdate")){
+                auto value=jsonObj.take("hideUpdate");
+                if(value.isDouble())jsonHideUpdates=value.toInt();
+            }
+            if(jsonObj.contains("hideSpecial")){
+                auto value=jsonObj.take("hideSpecial");
+                if(value.isDouble())jsonHideSpecialmessages=value.toInt();
+            }
+        }
+    }
+
+    qDebug()<<"[JSON] u:"<<jsonHideUpdates<<" s:"<<jsonHideSpecialmessages;
+}
+
+void MainWindow::setJsonVariables(){
+
+    QString path=getDocPath();
+    path.append("/config");
+    QDir dir(path);
+    if (!dir.exists()) dir.mkpath(".");
+    QFile file(path+"/config.json");
+    QJsonObject popup;
+    popup.insert("hideUpdate",jsonHideUpdates);
+    popup.insert("hideSpecial",jsonHideSpecialmessages);
+    QJsonDocument document;
+    document.setObject(popup);
+    QByteArray bytes=document.toJson(QJsonDocument::Indented);
+    if( file.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate ) )
+    {
+        QTextStream iStream( &file );
+        iStream.setCodec( "utf-8" );
+        iStream << bytes;
+        file.close();
+    }
+    else
+    {
+        qDebug()<<"file open failed: "<<path;
+    }
+
+}
+
+void MainWindow::on_jsonResetButton_clicked()//tmp
+{
+    jsonHideUpdates=jsonHideSpecialmessages=0;
+    setJsonVariables();
+    preparePopUps();
+    while(offerUpdate()){}
+    showSpecialmessage();
+}
+
 void MainWindow::on_instructionsTo_currentIndexChanged(int index)
 {
     ui->instructionsBrowser->setOpenExternalLinks(1);
@@ -205,6 +307,7 @@ void MainWindow::on_instructionsTo_currentIndexChanged(int index)
     }
     case 4:{
         ui->instructionsBrowser->setHtml(update_ins);
+        if(jsonHideUpdates or jsonHideSpecialmessages){ ui->jsonResetButton->show();}else{ui->jsonResetButton->hide();}//tmp
         break;
     }
     default:{
@@ -215,15 +318,29 @@ void MainWindow::on_instructionsTo_currentIndexChanged(int index)
     }
 }
 
-QString zeug,zeug2;
-int MainWindow::offerUpdate(){
+void MainWindow::preparePopUps(){
+    qDebug()<<"started preparing PopUps!";
+    if(!jsonHideUpdates){
     int i=5;
     while(updateinfo.length()<50&&i){
         fetchTextfeed(1,"https://raw.githubusercontent.com/nourHajRamadan/playground/main/up8426xhd2.html");
-        delay(1000);
+        delay(500);
         i--;
     }
+    }
+    if(!jsonHideSpecialmessages){
+    int i=5;
+    while(specialmessage.length()<7&&i){
+        fetchTextfeed(2,"https://raw.githubusercontent.com/nourHajRamadan/playground/main/sm94rud334.html");
+        delay(500);
+        i--;
+    }
+    }
+    qDebug()<<"finished preparing PopUps!";
+}
 
+QString zeug,zeug2;
+int MainWindow::offerUpdate(){ //int return because of while in main.cpp
     if(updateinfo.length()<50)return 0;
     QString newst=updateinfo.chopped(updateinfo.length()-6);
     newst.remove("v");
@@ -246,28 +363,41 @@ int MainWindow::offerUpdate(){
         mes.addButton("Nicht mehr anzeigen",QMessageBox::ApplyRole);//->3
         int tmp=mes.exec();
         if(!tmp)QDesktopServices::openUrl(QUrl("https://rwth-aachen.sciebo.de/s/3xlkX0pkpaNCkDz"));
-        if(tmp==3)qDebug()<<"3!";//nicht mehr anzeigen
+        if(tmp==2){
+            jsonHideUpdates++;
+            setJsonVariables();
+        }
     }
     return 0;
 }
 
 void MainWindow::showSpecialmessage(){
-    int i=5;
-    while(specialmessage.length()<7&&i){
-        fetchTextfeed(2,"https://raw.githubusercontent.com/nourHajRamadan/playground/main/sm94rud334.html");
-        delay(1000);
-        i--;
+    //specialmessage=QString(R"(0$51$3$caveat$Heute ist der 03.14.2024!$Happy Pi Day!!  $https://de.wikipedia.org/wiki/Pi-Tag)");//showBool/Size/Width/Fontfamily/Windowtitle/Headline/Infotext
+    if(specialmessage.length()<7)return;
+    int showBool=QString(specialmessage.section('$',0,0)).toInt();
+    if(!showBool)return;
+    int size=QString(specialmessage.section('$',1,1)).toInt();
+    int width=QString(specialmessage.section('$',2,2)).toInt();
+    QString fontfamily=specialmessage.section('$',3,3);
+    QString windowtitle=specialmessage.section('$',4,4);
+    QString headline=specialmessage.section('$',5,5);
+    QString infolink=specialmessage.section('$',6,6);
+    //qDebug()<<QString("%1 %2 %3 %4 %5 %6 %7\n").arg(showBool).arg(size).arg(width).arg(fontfamily).arg(windowtitle).arg(headline).arg(infolink);
+
+    QMessageBox mes;
+    mes.setWindowTitle(windowtitle);
+    mes.setFont(QFont(fontfamily,size,width,0));
+    mes.setText(headline);
+    mes.addButton("Cool",QMessageBox::RejectRole);
+    mes.addButton("Mehr erfahren",QMessageBox::HelpRole);//->1
+    mes.addButton("Nicht mehr anzeigen",QMessageBox::ApplyRole);//->2
+    int tmp=mes.exec();
+    if(tmp==1)QDesktopServices::openUrl(QUrl(infolink));
+    if(tmp==2){
+        jsonHideSpecialmessages++;
+        setJsonVariables();
     }
 
-    if(specialmessage.length()<7)return;
-    if(specialmessage.at(0)==0)return;
-    QString feed=specialmessage.remove(0,2);
-    QMessageBox mes;
-
-    mes.setWindowTitle("Binomialrechner NEWS");
-    mes.setTextFormat(Qt::RichText);
-    mes.setText(feed);
-    mes.exec();
 }
 int idextern;
 void MainWindow::fetchTextfeed(int id, QString s)
@@ -308,7 +438,7 @@ QString specialDoubleInput(QString arg){
     if(arg.contains(',')){
         arg.replace(',','.');
         return arg;
-    }else if(arg.contains('/')){//
+    }else if(arg.contains('/')){
         int signal=0;
         if(arg!=NULL && arg[arg.length()-1]==(char)32){
             arg.remove(' ');
@@ -319,9 +449,9 @@ QString specialDoubleInput(QString arg){
         double res=a.toDouble()/b.toDouble();
         if(res>pow(2,30))res=0;
         QString tmp=QString::number(res);
-        qDebug()<<res<<tmp;
 
         return !signal?tmp:tmp+" ";
+
     }else{
         return arg;
     }
@@ -467,6 +597,7 @@ void MainWindow::binomOutput(int j, int y){
 
         }
     }
+    //if(markIndex)on_std_choose_marked_interval_currentIndexChanged(markIndex);
 
 }
 
@@ -487,6 +618,10 @@ void MainWindow::on__n_edit_textChanged(const QString &arg1)
     }
     n=arg.toInt()>=0?arg.toInt():0;
     binomOutput(setToCumulative,setToParam);
+    if(markIndex){
+        on_std_choose_marked_interval_currentIndexChanged(markIndex);
+        ui->_n_edit->setFocus();
+    }
 
 }
 
@@ -501,6 +636,10 @@ void MainWindow::on__p_edit_textChanged(const QString &arg1)
     }
     p=arg.toDouble()>=0?arg.toDouble():0;
     binomOutput(setToCumulative,setToParam);
+    if(markIndex){
+        on_std_choose_marked_interval_currentIndexChanged(markIndex);
+        ui->_p_edit->setFocus();
+    }
 }
 
 
@@ -517,6 +656,7 @@ void MainWindow::on_underEdit_textChanged(const QString &arg1)
     k1=arg.toInt()>=0?arg.toInt():0;
     if(!k1 && arg!="0") shitstorm=1;
     binomOutput(setToCumulative,setToParam);
+    if(k1!=c1 or k2!=c2)ui->std_choose_marked_interval->setCurrentIndex(0);
 }
 
 
@@ -531,6 +671,7 @@ void MainWindow::on_upperEdit_textChanged(const QString &arg1)
     k2=arg.toInt()>=0?arg.toInt():0;
     if(!k2 && arg!="0") shitstorm=1;
     binomOutput(setToCumulative,setToParam);
+    if(k1!=c1 or k2!=c2)ui->std_choose_marked_interval->setCurrentIndex(0);
 }
 
 void MainWindow::on__m_edit_textChanged(const QString &arg1)
@@ -543,6 +684,10 @@ void MainWindow::on__m_edit_textChanged(const QString &arg1)
     }
     mu=arg.toDouble()>=0?arg.toDouble():0;
     binomOutput(setToCumulative,setToParam);
+    if(markIndex){
+        on_std_choose_marked_interval_currentIndexChanged(markIndex);
+        ui->_m_edit->setFocus();
+    }
 }
 
 
@@ -556,6 +701,10 @@ void MainWindow::on__sigma_edit_textChanged(const QString &arg1)
     }
     sigma=arg.toDouble()>=0?arg.toDouble():0;
     binomOutput(setToCumulative,setToParam);
+    if(markIndex){
+        on_std_choose_marked_interval_currentIndexChanged(markIndex);
+        ui->_sigma_edit->setFocus();
+    }
 }
 
 ///////// ----------- end of block -----------
@@ -567,19 +716,7 @@ void MainWindow::on_savePNG_clicked(bool checked)
     if(checked){hSt=1;histoAni=0;}else{hSt=0;histoAni=1;}
 }
 
-QString getDocPath(){
-    QString res, docdir(getenv("USERPROFILE"));
-    for(int i=0;i<docdir.length();i++){
-        if(docdir[i]==(char)92){
-            res.append('/');
-        }else{
-            res.append(docdir[i]);
-        }
-    }
-    res.append("/Documents/Binomialrechner");
-    return res;
-}
-void pngexport(QChartView* chartView, int histocount, quint32 rando){
+void pngexport(QChartView* chartView, int histocount, QString sessionDocname){
 
     QPixmap p = chartView->grab();
     QOpenGLWidget *glWidget  = chartView->findChild<QOpenGLWidget*>();
@@ -592,30 +729,82 @@ void pngexport(QChartView* chartView, int histocount, quint32 rando){
     }
 
     QString docPath=getDocPath();
-    QDir dir(QString("%1/SitzungsID%2").arg(docPath).arg(rando));
+    QDir dir(QString("%1/Sitzung am %2").arg(docPath).arg(sessionDocname));
     if (!dir.exists()) dir.mkpath(".");
     qDebug()<<"PNG save:"<<p.save(QString("%1/%2/histogramm no.%3.png").arg(docPath).arg(dir.dirName()).arg(histocount));
 }
 
 void MainWindow::on_showPNGTarget_clicked()
 {
-    QDesktopServices::openUrl( QUrl::fromLocalFile(QString("%1/SitzungsID%2").arg(getDocPath()).arg(histo_png_rando)));
+    QDesktopServices::openUrl( QUrl::fromLocalFile(QString("%1/Sitzung am %2").arg(getDocPath()).arg(sessionDocname)));
 }
 
 void MainWindow::on_std_show_histo_markings_clicked(bool checked)
 {
     if(checked){
-        ui->std_choose_marked_interval->setDisabled(0);
         histoMarkings++;
     }else{
         histoMarkings=0;
-        ui->std_choose_marked_interval->setDisabled(1);
     }
+}
+
+void MainWindow::getConfidence(int isSigma, double target){
+    this->on_cumulativeP_clicked(1);
+    ui->cumulativeP->setCheckState(Qt::Checked);
+    if(isSigma){
+        double lower=mu-(target*sigma);
+        double higher=mu+(target*sigma);
+        c1=k1=ceil(lower);
+        c2=k2=floor(higher);
+    }else{
+        if(intervalAroundMu(n,p,target,k1,k2)==-1){sthsWrong(); return;}
+        c1=k1;  c2=k2;
+    }
+
+    ui->underEdit->setText(QString::number(k1));
+    ui->upperEdit->setText(QString::number(k2));
 }
 
 void MainWindow::on_std_choose_marked_interval_currentIndexChanged(int index)
 {
-
+    markIndex=index;
+    switch(index){
+    case 0:
+    {
+        return;
+        break;
+    }
+    case 1://1s
+    {
+        getConfidence(1,1);
+        break;
+    }
+    case 2://2s
+    {
+        getConfidence(1,2);
+        break;
+    }
+    case 3://3s
+    {
+        getConfidence(1,3);
+        break;
+    }
+    case 4://90%
+    {
+        getConfidence(0,0.9);
+        break;
+    }
+    case 5://95%
+    {
+        getConfidence(0,0.95);
+        break;
+    }
+    case 6://99%
+    {
+        getConfidence(0,0.99);
+        break;
+    }
+    }
 }
 
 void MainWindow::on_showHisto_clicked()
@@ -707,9 +896,9 @@ void MainWindow::on_showHisto_clicked()
             mes.setWindowTitle("Tipp!");
             mes.setText("Vergrößern Sie das Fenster für bessere Bilder bei großem n!\t");
             mes.exec();
-            tipSt--;
+            tipSt=0;
       }
-      pngexport(chartView,histocount,histo_png_rando);
+      pngexport(chartView,histocount,sessionDocname);
     }
 }
 ////-----------end of block-----------
@@ -865,10 +1054,10 @@ void MainWindow::on_showTable_clicked()
     QString docPath=getDocPath();
 
     if(tSSt){
-        QDir dir(QString("%1/SitzungsID%2").arg(docPath).arg(histo_png_rando));
+        QDir dir(QString("%1/Sitzung am %2").arg(docPath).arg(sessionDocname));
     if (!dir.exists()) dir.mkpath(".");
 
-    QString dir_name(QString("%1/SitzungsID%2/tabelle no.%3").arg(docPath).arg(histo_png_rando).arg(tablecount));
+    QString dir_name(QString("%1/Sitzung am %2/tabelle no.%3").arg(docPath).arg(sessionDocname).arg(tablecount));
     QFile data(dir_name+".csv");
     if (data.open(QFile::WriteOnly | QIODevice::Append)){}
     QTextStream output(&data);
@@ -1340,7 +1529,7 @@ void MainWindow::on_prk_2nd_compStatement_currentIndexChanged(int index)
 
 void MainWindow::on_prk_goToStd_clicked()
 {
-    if(prkObj->n==-1 or prkObj->p==-1 or prkObj->k==-1 or prkObj->k1==-1 or prkObj->k2==-1 or prkObj->pRes==-1){
+    if(prkObj->n==-1 or prkObj->p==-1 or prkObj->k==-1 or prkObj->k1==-1 or prkObj->k2==-1 or prkObj->pRes==-1 or prkObj->n==0 or prkObj->p==0 or prkObj->n<prkObj->k or prkObj->n<prkObj->k2 or prkObj->k2<prkObj->k1 ){
         QMessageBox mes;
         mes.setWindowTitle("Warnung");
         mes.setText("Ungültige Werte können nicht kopiert werden!");
@@ -1376,7 +1565,7 @@ QString formatOtherLimit(int cumulative, char missing, double firstLimit, int pr
 void MainWindow::prkOutput(int missing){//missing: n<=>1 p<=>2 k<=>3 k1<=>4 k2<=>5
     switch (missing){
         case 1:{
-            if(prkObj->p==0){ ui->prk_n_out->setText("n=? (Ungültige Eingabe)"); break;}
+        if(prkObj->p==0){ ui->prk_n_out->setText("n=? (Ungültige Eingabe)"); break;}
             int tmp=prkObj->nMissing(prk_cumulative);
             QString tmp2=formatOtherLimit(prk_cumulative,'n',tmp,prk_show_other_limit);
             QString cmp=prkObj->cmpstatus?"≤":"≥";
@@ -1529,9 +1718,9 @@ void MainWindow::firstWelcome(){
         if(i<16)space2.append("&nbsp;");
     }
     ui->textBrowserX->setHtml(QString(R"(<br><br><br><br><br><br>%1<span style="font-size: 100px;font-family: Agency FB;"> Willkommen zum </span>)").arg(space));
-    delay(1441);
+    delay(1111);
     for(int i=20;i<=255;i=i+5){
-                ui->textBrowserX->setHtml("<br>"+QString(R"(%2<span style="font-size: 200px; color:rgb(%1, %1, %1); font-family: Agency FB;">🂠 </span>)").arg(i).arg(space2)+QString(R"(<span style="font-size: 150px; color:rgb(%1, %1, %1); font-family: Agency FB;">Binomialrechner</span>)").arg(i));
+        ui->textBrowserX->setHtml("<br>"+QString(R"(%2<span style="font-size: 200px; color:rgb(%1, %1, %1); font-family: Agency FB;">🂠 </span>)").arg(i).arg(space2)+QString(R"(<span style="font-size: 150px; color:rgb(%1, %1, %1); font-family: Agency FB;">Binomialrechner</span>)").arg(i));
         delay(42);
     }
 }
@@ -1594,7 +1783,3 @@ void MainWindow::luckyLoki(){
 }
 
 ////// ----------end of block--------------
-
-
-
-
